@@ -1,4 +1,3 @@
-import React from 'react';
 import { motion } from 'framer-motion';
 import { Code, Lightbulb, Users, Rocket, Award, Heart } from 'lucide-react';
 

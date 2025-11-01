@@ -1,4 +1,4 @@
-import React, { useRef, useEffect } from 'react';
+import { useRef, useEffect } from 'react';
 import * as THREE from 'three';
 import { motion } from 'framer-motion';
 import { ChevronDown, Code, Cpu, Database } from 'lucide-react';

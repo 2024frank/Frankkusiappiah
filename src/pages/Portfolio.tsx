@@ -1,4 +1,3 @@
-import React from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
 
@@ -11,7 +10,7 @@ import AchievementsSection from '../components/portfolio/AchievementsSection';
 import ContactSection from '../components/portfolio/ContactSection';
 
 export default function Portfolio() {
-  const { data: projects = [], isLoading } = useQuery({
+  const { data: projects = [] } = useQuery({
     queryKey: ['projects'],
     queryFn: () => base44.entities.Project.list('-created_date'),
     initialData: []

@@ -1,4 +1,3 @@
-import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Github, ExternalLink, Calendar, Tag, CheckCircle } from 'lucide-react';
 import { format } from 'date-fns';
