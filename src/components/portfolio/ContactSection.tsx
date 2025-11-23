@@ -52,7 +52,7 @@ export default function ContactSection() {
       icon: Linkedin,
       label: 'LinkedIn',
       value: 'Connect on LinkedIn',
-      link: 'https://linkedin.com/in/frank-kusi-appiah',
+      link: 'https://www.linkedin.com/in/frank-kusi-appiah-260a95237/',
       color: 'blue'
     },
     {
