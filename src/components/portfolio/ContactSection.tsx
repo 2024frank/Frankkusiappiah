@@ -172,7 +172,7 @@ export default function ContactSection() {
             >
               <h4 className="text-white font-bold mb-2">Open to Opportunities</h4>
               <p className="text-gray-400 text-sm">
-                I'm currently seeking software engineering internships and collaborative projects. 
+                I'm currently seeking hardware and electrical engineering opportunities and collaborative projects. 
                 If you have an exciting opportunity or idea, I'd love to hear from you!
               </p>
             </motion.div>

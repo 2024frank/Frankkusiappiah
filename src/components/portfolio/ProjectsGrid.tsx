@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { ExternalLink, Github, Calendar, Search } from 'lucide-react';
+import { ExternalLink, Github, Calendar, Image } from 'lucide-react';
 import { format } from 'date-fns';
 import ProjectModal from './ProjectModal';
 
@@ -10,6 +10,7 @@ interface Project {
   description: string;
   category: string;
   image_url?: string;
+  gallery_images?: string[];
   github_url?: string;
   demo_url?: string;
   completion_date?: string;
@@ -23,68 +24,48 @@ interface ProjectsGridProps {
 
 export default function ProjectsGrid({ projects }: ProjectsGridProps) {
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
-  const [filterCategory, setFilterCategory] = useState('all');
-  const [searchTerm, setSearchTerm] = useState('');
-
-  const categories = ['all', ...new Set(projects.map(p => p.category))];
-
-  const filteredProjects = projects.filter(project => {
-    const matchesCategory = filterCategory === 'all' || project.category === filterCategory;
-    const matchesSearch = project.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         project.description.toLowerCase().includes(searchTerm.toLowerCase());
-    return matchesCategory && matchesSearch;
-  });
 
   return (
     <>
-      <section id="projects" className="py-20 bg-gradient-to-b from-gray-900 to-gray-800">
+      <section id="projects" className="pt-20 pb-32 bg-gradient-to-b from-gray-900 to-gray-800 min-h-screen">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.6 }}
-            className="text-center mb-12"
+            className="text-center mb-16"
           >
-            <h2 className="text-4xl md:text-5xl font-bold text-white mb-4">
-              Featured <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-500">Projects</span>
+            {/* Profile Picture */}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.5 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.1, duration: 0.6 }}
+              className="mb-8"
+            >
+              <div className="relative w-56 h-56 mx-auto">
+                <div className="absolute inset-0 bg-gradient-to-r from-cyan-500 to-blue-500 rounded-full animate-pulse opacity-75 blur-xl"></div>
+                <img
+                  src="/images/profile.jpg"
+                  alt="Frank Kusi Appiah"
+                  className="relative w-full h-full rounded-full object-cover object-top border-4 border-cyan-500/50 shadow-2xl shadow-cyan-500/50"
+                  style={{ objectPosition: 'center 20%' }}
+                />
+              </div>
+            </motion.div>
+            
+            <h1 className="text-5xl md:text-6xl font-bold text-white mb-3">
+              Frank Kusi <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-500">Appiah</span>
+            </h1>
+            <p className="text-xl text-gray-400 mb-8">i write code, i build stuff, i learn things on the fly</p>
+            
+            <h2 className="text-3xl md:text-4xl font-bold text-white mb-4 mt-12">
+              Things I Have <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-500">Built</span>
             </h2>
             <div className="w-24 h-1 bg-gradient-to-r from-cyan-500 to-blue-500 mx-auto rounded-full mb-6" />
-            <p className="text-gray-400 text-lg max-w-2xl mx-auto">
-              Innovative solutions across IoT, ML, and full-stack development
-            </p>
           </motion.div>
 
-          {/* Search and Filter */}
-          <div className="mb-8 flex flex-col md:flex-row gap-4">
-            <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-              <input
-                type="text"
-                placeholder="Search projects..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-3 bg-gray-900/50 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-cyan-500 transition-colors duration-300"
-              />
-            </div>
-            <div className="flex gap-2 overflow-x-auto pb-2">
-              {categories.map((cat, i) => (
-                <button
-                  key={i}
-                  onClick={() => setFilterCategory(cat)}
-                  className={`px-4 py-2 rounded-lg font-medium whitespace-nowrap transition-all duration-300 ${
-                    filterCategory === cat
-                      ? 'bg-gradient-to-r from-cyan-500 to-blue-500 text-white shadow-lg'
-                      : 'bg-gray-900/50 border border-gray-700 text-gray-300 hover:border-cyan-500/50'
-                  }`}
-                >
-                  {cat === 'all' ? 'All Projects' : cat}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {filteredProjects.length === 0 ? (
+          {projects.length === 0 ? (
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -93,8 +74,8 @@ export default function ProjectsGrid({ projects }: ProjectsGridProps) {
               <div className="text-gray-400 text-lg">No projects found matching your criteria</div>
             </motion.div>
           ) : (
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filteredProjects.map((project, index) => (
+            <div className="grid md:grid-cols-2 gap-8">
+              {projects.map((project, index) => (
                 <motion.div
                   key={project.id}
                   initial={{ opacity: 0, y: 30 }}
@@ -107,13 +88,40 @@ export default function ProjectsGrid({ projects }: ProjectsGridProps) {
                     project.featured ? 'md:col-span-2 md:row-span-2' : ''
                   }`}
                 >
-                  <div className={`relative overflow-hidden ${project.featured ? 'h-96' : 'h-48'}`}>
-                    <img
-                      src={project.image_url || 'https://images.unsplash.com/photo-1518770660439-4636190af475?w=800'}
-                      alt={project.title}
-                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-gray-900 via-gray-900/50 to-transparent opacity-80 group-hover:opacity-90 transition-opacity" />
+                  <div className={`relative overflow-hidden ${project.featured ? 'h-96' : 'h-64'}`}>
+                    {((project.gallery_images && project.gallery_images[0]) || project.image_url) ? (
+                      <>
+                        {project.image_url?.match(/\.(mp4|mov|webm|ogg)$/i) ? (
+                          <video
+                            src={project.image_url}
+                            className="w-full h-full object-cover"
+                            muted
+                            loop
+                            playsInline
+                            poster=""
+                          />
+                        ) : (
+                          <img
+                            src={(project.gallery_images && project.gallery_images[0]) || project.image_url}
+                            alt={project.title}
+                            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                          />
+                        )}
+                        <div className="absolute inset-0 bg-gradient-to-t from-gray-900 via-gray-900/50 to-transparent opacity-80 group-hover:opacity-90 transition-opacity" />
+                      </>
+                    ) : (
+                      <div className="w-full h-full bg-gradient-to-br from-gray-800 to-gray-900 flex items-center justify-center">
+                        <div className="text-gray-600 text-6xl">💻</div>
+                      </div>
+                    )}
+                    
+                    {/* Gallery indicator */}
+                    {project.gallery_images && project.gallery_images.length > 1 && (
+                      <div className="absolute bottom-4 left-4 px-3 py-1 bg-gray-900/80 backdrop-blur-sm rounded-full text-white text-xs font-semibold flex items-center gap-1">
+                        <Image className="w-3 h-3" />
+                        {project.gallery_images.length} Photos
+                      </div>
+                    )}
                     
                     <div className="absolute top-4 right-4 flex gap-2">
                       {project.github_url && (
@@ -139,12 +147,6 @@ export default function ProjectsGrid({ projects }: ProjectsGridProps) {
                         </button>
                       )}
                     </div>
-
-                    {project.featured && (
-                      <div className="absolute top-4 left-4 px-3 py-1 bg-gradient-to-r from-cyan-500 to-blue-500 rounded-full text-white text-xs font-semibold">
-                        Featured
-                      </div>
-                    )}
                   </div>
 
                   <div className="p-6">

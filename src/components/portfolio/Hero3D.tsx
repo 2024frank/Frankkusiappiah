@@ -322,6 +322,23 @@ export default function Hero3D() {
           transition={{ duration: 0.8 }}
           className="max-w-5xl"
         >
+          {/* Profile Picture */}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.5 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 0.1, duration: 0.6 }}
+            className="mb-8"
+          >
+            <div className="relative w-40 h-40 mx-auto">
+              <div className="absolute inset-0 bg-gradient-to-r from-cyan-500 to-blue-500 rounded-full animate-pulse opacity-75 blur-xl"></div>
+              <img
+                src="/images/profile.jpg"
+                alt="Frank Kusi Appiah"
+                className="relative w-full h-full rounded-full object-cover border-4 border-cyan-500/50 shadow-2xl shadow-cyan-500/50"
+              />
+            </div>
+          </motion.div>
+          
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}

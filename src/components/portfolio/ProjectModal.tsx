@@ -1,5 +1,6 @@
+import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Github, ExternalLink, Calendar, Tag, CheckCircle } from 'lucide-react';
+import { X, Github, ExternalLink, Calendar, Tag, ChevronLeft, ChevronRight } from 'lucide-react';
 import { format } from 'date-fns';
 
 interface Project {
@@ -8,6 +9,7 @@ interface Project {
   description: string;
   category: string;
   image_url?: string;
+  gallery_images?: string[];
   github_url?: string;
   demo_url?: string;
   completion_date?: string;
@@ -21,7 +23,29 @@ interface ProjectModalProps {
 }
 
 export default function ProjectModal({ project, onClose }: ProjectModalProps) {
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  
   if (!project) return null;
+
+  // Determine which images to show - gallery or single image
+  const images = project.gallery_images && project.gallery_images.length > 0 
+    ? project.gallery_images 
+    : project.image_url 
+    ? [project.image_url]
+    : [];
+
+  const nextImage = () => {
+    setCurrentImageIndex((prev) => (prev + 1) % images.length);
+  };
+
+  const prevImage = () => {
+    setCurrentImageIndex((prev) => (prev - 1 + images.length) % images.length);
+  };
+
+  // Check if current media is a video
+  const isVideo = (url: string) => {
+    return url.match(/\.(mp4|mov|webm|ogg)$/i);
+  };
 
   return (
     <AnimatePresence>
@@ -39,29 +63,97 @@ export default function ProjectModal({ project, onClose }: ProjectModalProps) {
           onClick={(e) => e.stopPropagation()}
           className="bg-gray-900 border border-cyan-500/30 rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto"
         >
-          {/* Header Image */}
-          <div className="relative h-64 md:h-96 overflow-hidden rounded-t-2xl">
-            <img
-              src={project.image_url || 'https://images.unsplash.com/photo-1518770660439-4636190af475?w=800'}
-              alt={project.title}
-              className="w-full h-full object-cover"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-gray-900 via-gray-900/50 to-transparent" />
-            
-            <button
-              onClick={onClose}
-              className="absolute top-4 right-4 w-10 h-10 bg-gray-900/80 backdrop-blur-sm rounded-full flex items-center justify-center text-white hover:bg-red-500 transition-colors duration-300"
-            >
-              <X className="w-5 h-5" />
-            </button>
-
-            {project.featured && (
-              <div className="absolute top-4 left-4 px-4 py-2 bg-gradient-to-r from-cyan-500 to-blue-500 rounded-full text-white text-sm font-semibold flex items-center gap-2">
-                <CheckCircle className="w-4 h-4" />
-                Featured Project
+          {/* Header Image/Video Gallery */}
+          {images.length > 0 && (
+            <div className="relative h-96 md:h-[600px] overflow-hidden rounded-t-2xl bg-gray-900">
+              <div className="w-full h-full flex items-center justify-center p-4">
+                {isVideo(images[currentImageIndex]) ? (
+                  <motion.video
+                    key={currentImageIndex}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ duration: 0.3 }}
+                    src={images[currentImageIndex]}
+                    className="max-w-full max-h-full object-contain"
+                    controls
+                    autoPlay
+                    loop
+                    muted
+                  />
+                ) : (
+                  <motion.img
+                    key={currentImageIndex}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ duration: 0.3 }}
+                    src={images[currentImageIndex]}
+                    alt={`${project.title} - Image ${currentImageIndex + 1}`}
+                    className="max-w-full max-h-full object-contain"
+                  />
+                )}
               </div>
+              <div className="absolute inset-0 bg-gradient-to-t from-gray-900 via-gray-900/30 to-transparent pointer-events-none" />
+            
+            {/* Gallery Navigation */}
+            {images.length > 1 && (
+              <>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    prevImage();
+                  }}
+                  className="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 bg-gray-900/80 backdrop-blur-sm rounded-full flex items-center justify-center text-white hover:bg-cyan-500 transition-colors duration-300"
+                >
+                  <ChevronLeft className="w-6 h-6" />
+                </button>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    nextImage();
+                  }}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 bg-gray-900/80 backdrop-blur-sm rounded-full flex items-center justify-center text-white hover:bg-cyan-500 transition-colors duration-300"
+                >
+                  <ChevronRight className="w-6 h-6" />
+                </button>
+                <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
+                  {images.map((_, index) => (
+                    <button
+                      key={index}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setCurrentImageIndex(index);
+                      }}
+                      className={`w-2 h-2 rounded-full transition-all duration-300 ${
+                        index === currentImageIndex 
+                          ? 'bg-cyan-500 w-8' 
+                          : 'bg-white/50 hover:bg-white/80'
+                      }`}
+                    />
+                  ))}
+                </div>
+              </>
             )}
-          </div>
+              
+              <button
+                onClick={onClose}
+                className="absolute top-4 right-4 w-10 h-10 bg-gray-900/80 backdrop-blur-sm rounded-full flex items-center justify-center text-white hover:bg-red-500 transition-colors duration-300 z-10"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+          )}
+
+          {/* Close button when no images */}
+          {images.length === 0 && (
+            <div className="relative p-4 bg-gray-800/50 rounded-t-2xl">
+              <button
+                onClick={onClose}
+                className="absolute top-4 right-4 w-10 h-10 bg-gray-900/80 backdrop-blur-sm rounded-full flex items-center justify-center text-white hover:bg-red-500 transition-colors duration-300 z-10"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+          )}
 
           {/* Content */}
           <div className="p-6 md:p-8">
