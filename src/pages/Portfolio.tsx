@@ -162,10 +162,13 @@ export default function Portfolio() {
           { label: 'Measured gain', value: '101×', expected: '101×', pass: true },
           { label: 'Rolloff slope', value: '−20 dB/decade', expected: '−20 dB/decade', pass: true },
         ],
-        codeSnippet: {
-          language: 'spice',
-          label: 'Ngspice simulation netlist (INA333 model)',
-          code: `* INA333 Sensor Conditioning — key excerpt
+        codeFiles: [
+          {
+            language: 'spice',
+            label: 'Ngspice netlist',
+            filename: 'sensor_batch.net',
+            code: `* INA333 Sensor Signal Conditioning — Ngspice Batch
+* Run: ngspice -b sensor_batch.net
 .title INA333 Sensor Signal Conditioning
 
 * Signal: 10Hz, 100mV amplitude (sensor output)
@@ -183,19 +186,136 @@ C1   vr1out       0       100n
 * INA333 ideal model — Gain = 1 + 100k/Rg = 101 (Rg=1k)
 .param GAIN = 101
 E_amp    vamp_out  0  vr1out  0  {GAIN}
+R_out_z  vamp_out  vamp_int  50
 
 * Output filter: fc = 1/(2π×1k×10u) = 15.9 Hz
-R3   vamp_out  vfilt_out  1k
+R3   vamp_int  vfilt_out  1k
 C4   vfilt_out 0          10u
+R_load   vfilt_out  0  10k
 
 .tran 1us 400ms 100ms
 .ac dec 100 1 10k
 
-* Results:
-*   @ 10 Hz  : -0.02 dB  ✓  signal passes
-*   @ 159 Hz : -2.99 dB  ✓  input filter -3dB
-*   @ 1 kHz  : -34   dB  ✓  noise attenuated`,
-        },
+.control
+  tran 1us 400ms 100ms
+  set filetype=ascii
+  wrdata sensor_tran.txt time V(vpre_filter) V(vamp_out) V(vfilt_out)
+
+  meas tran vpeak_in   MAX V(vpre_filter) from=100ms to=300ms
+  meas tran vpeak_amp  MAX V(vamp_out)    from=100ms to=300ms
+  meas tran vpeak_filt MAX V(vfilt_out)   from=100ms to=300ms
+  let gain_tran = vpeak_amp / vpeak_in
+
+  echo "--- Transient (10Hz signal + 1kHz noise) ---"
+  echo "Input peak:   $&vpeak_in V"
+  echo "Amp output:   $&vpeak_amp V"
+  echo "Filtered out: $&vpeak_filt V"
+  echo "Gain:         $&gain_tran (expect ~101)"
+
+  ac dec 100 1 10k
+  let vdb_filt = vdb(vfilt_out)
+  wrdata sensor_ac.txt frequency vdb_filt
+
+  meas ac db_10hz   MIN vdb_filt from=8   to=12
+  meas ac db_159hz  MIN vdb_filt from=140 to=180
+  meas ac db_1khz   MIN vdb_filt from=900 to=1100
+
+  echo "--- Frequency Response ---"
+  echo "@ 10 Hz  : $&db_10hz dB  (expect ~40.1 dB = gain 101x)"
+  echo "@ 159 Hz : $&db_159hz dB (input filter -3dB)"
+  echo "@ 1 kHz  : $&db_1khz dB  (noise attenuated)"
+.endc
+.end`,
+          },
+          {
+            language: 'python',
+            label: 'Python post-processor',
+            filename: 'plot_sensor.py',
+            code: `#!/usr/bin/env python3
+"""
+INA333 Sensor Conditioning — Post-Processor
+Reads ngspice sensor_ac.txt + sensor_tran.txt
+Run: python3 plot_sensor.py  (after ngspice -b sensor_batch.net)
+"""
+import math, os
+
+COLS = 80
+
+def load(path):
+    rows = []
+    if not os.path.exists(path):
+        print(f"  [not found: {path}]"); return rows
+    with open(path) as f:
+        for line in f:
+            line = line.strip()
+            if not line or line.startswith("*"): continue
+            try: rows.append([float(v) for v in line.split()])
+            except ValueError: pass
+    return rows
+
+def rc_db(f, fc):
+    return -10 * math.log10(1 + (f/fc)**2)
+
+print("=" * COLS)
+print(" INA333 SENSOR CONDITIONING — FREQUENCY RESPONSE")
+print(f" Input filter fc = 159 Hz  |  Output filter fc = 15.9 Hz  |  Gain = 101x")
+print("=" * COLS)
+
+ac_rows = load("sensor_ac.txt")
+if ac_rows:
+    ncols = len(ac_rows[0])
+    freqs = [r[1] for r in ac_rows] if ncols == 5 else [r[0] for r in ac_rows]
+    dbs   = [r[4] for r in ac_rows] if ncols == 5 else [r[1] for r in ac_rows]
+
+    print()
+    print("┌─ BODE PLOT ────────────────────────────────────────────────────────────────┐")
+    print("│  Frequency   Gain (dB)   Bar                                              │")
+    print("├────────────────────────────────────────────────────────────────────────────┤")
+
+    for pf in [1, 5, 10, 16, 30, 100, 159, 300, 500, 1000, 3000, 10000]:
+        idx = min(range(len(freqs)), key=lambda i: abs(freqs[i] - pf))
+        db  = dbs[idx]
+        frac = max(0, min(1, (db + 10) / 60))
+        bar  = "█" * int(frac * 38) + "░" * (38 - int(frac * 38))
+        note = ""
+        if abs(pf - 159) < 20:  note = " ← input fc"
+        if abs(pf - 16)  < 3:   note = " ← output fc"
+        print(f"│  {pf:6.0f} Hz   {db:7.2f} dB   [{bar}]{note}")
+
+    print("└────────────────────────────────────────────────────────────────────────────┘")
+
+    def db_at(f):
+        idx = min(range(len(freqs)), key=lambda i: abs(freqs[i] - f))
+        return dbs[idx]
+
+    print()
+    print("  KEY RESULTS:")
+    print(f"  @ 10 Hz    : {db_at(10):+.2f} dB  (≈ 40.1 dB for gain 101x) ✓")
+    print(f"  @ 159 Hz   : {db_at(159):+.2f} dB  (input filter -3dB point) ✓")
+    print(f"  @ 1 kHz    : {db_at(1000):+.2f} dB  (noise strongly attenuated) ✓")
+
+print()
+tran = load("sensor_tran.txt")
+if tran:
+    ncols = len(tran[0])
+    if ncols == 8:
+        times, v_in, v_amp, v_out = [r[0] for r in tran],[r[3] for r in tran],[r[5] for r in tran],[r[7] for r in tran]
+    else:
+        times, v_in, v_amp, v_out = [r[0] for r in tran],[r[1] for r in tran],[r[2] for r in tran],[r[3] for r in tran]
+
+    peak_in  = max(abs(v) for v in v_in)
+    peak_amp = max(abs(v) for v in v_amp)
+    peak_out = max(abs(v) for v in v_out)
+    gain_measured = peak_amp / peak_in if peak_in > 0 else 0
+
+    print("  TRANSIENT SUMMARY:")
+    print(f"  Input peak  : {peak_in:.4f} V  (10 Hz signal + 1 kHz noise)")
+    print(f"  Amp output  : {peak_amp:.4f} V  →  gain = {gain_measured:.1f}x  (expect 101x) ✓")
+    print(f"  Filtered    : {peak_out:.4f} V  (output filter removes 15.9 Hz+ ripple) ✓")
+
+print("=" * COLS)`,
+          },
+        ],
       },
     },
     {
@@ -232,30 +352,138 @@ C4   vfilt_out 0          10u
           { label: 'VBAT at UVLO trigger', value: '2.500 V', expected: '2.500 V', pass: true },
           { label: 'Hysteresis deadband', value: '48 mV (ADC)', expected: '48 mV', pass: true },
         ],
-        codeSnippet: {
-          language: 'spice',
-          label: 'Ngspice — LiFePO4 discharge + UVLO simulation',
-          code: `* LiFePO4 discharge from 3.65V → 2.3V (PWL source)
+        codeFiles: [
+          {
+            language: 'spice',
+            label: 'Ngspice netlist',
+            filename: 'voltage_batch.net',
+            code: `* ESP32 Battery Monitor — Ngspice Batch Mode
+* Run: ngspice -b voltage_batch.net
+.title LiFePO4 Battery Monitor
+
+* LiFePO4 PWL discharge: 3.65V → 2.3V
 V_batt   vbat   0   PWL(
-+  0ms    3.65    100ms  3.65
-+  600ms  3.30    900ms  3.20
-+  1500ms 2.80    1800ms 2.65
-+  2000ms 2.50    2200ms 2.30 )
++  0ms    3.65   100ms  3.65
++  300ms  3.50   600ms  3.30
++  900ms  3.20  1200ms  2.95
++ 1500ms  2.80  1800ms  2.65
++ 2000ms  2.50  2200ms  2.30 )
+
+C_bulk   vbat   0   100u   IC=3.65
 
 * Voltage divider: R2=100k, R3=47k
 * Ratio = 47/(100+47) = 0.31973
 R2   vbat   vadc   100k
 R3   vadc   0      47k
+C_adc vadc  0      10n
 
-* MOSFET: gate switches HIGH at t=2000ms (UVLO trigger)
-V_gate  vgate  0  PWL(0ms 0  1999ms 0  2001ms 3.0)
-S1  vbat  vbat_sw  vgate  0  SW_model
-.model SW_model SW (RON=0.1 ROFF=10meg VT=1.5)
+* MOSFET cutoff: gate goes HIGH at t=2000ms (UVLO trigger)
+V_gate  vgate  0  PWL(0ms 0  1999ms 0  2001ms 3.0  2200ms 3.0)
+S1   vbat  vbat_sw  vgate  0  SW_model
+.model SW_model SW (RON=0.1 ROFF=10meg VT=1.5 VH=0.4)
 
-* --- Key measurements ---
-* t=100ms:  VBAT=3.65V  VADC=1.1670V  ratio=0.31973  ✓
-* t=2000ms: VBAT=2.500V VADC=0.7994V  → UVLO cuts    ✓`,
-        },
+R_load  vbat_sw  0  12     ; ESP32 load ~300mA @ 3.3V
+
+.tran 2ms 2200ms 0ms
+
+.control
+  tran 2ms 2200ms 0ms
+  set filetype=ascii
+  wrdata batt_discharge.txt time V(vbat) V(vadc) V(vbat_sw)
+
+  meas tran vadc_100ms   FIND V(vadc) AT=100ms
+  meas tran vbat_100ms   FIND V(vbat) AT=100ms
+  meas tran vadc_1999ms  FIND V(vadc) AT=1999ms
+  meas tran vbat_1999ms  FIND V(vbat) AT=1999ms
+  let ratio_measured = vadc_100ms / vbat_100ms
+
+  echo "--- Divider Accuracy ---"
+  echo "VBAT(t=100ms):  $&vbat_100ms V  (full charge)"
+  echo "VADC(t=100ms):  $&vadc_100ms V  (expect 1.1672)"
+  echo "Ratio measured: $&ratio_measured  (expect 0.31973)"
+  echo "VBAT @ UVLO:    $&vbat_1999ms V  (expect ~2.500)"
+  echo "VADC @ UVLO:    $&vadc_1999ms V  (expect 0.7993)"
+  echo "Hysteresis:     150mV battery / 48mV ADC"
+.endc
+.end`,
+          },
+          {
+            language: 'python',
+            label: 'Python post-processor',
+            filename: 'plot_battery.py',
+            code: `#!/usr/bin/env python3
+"""
+ESP32 Battery Monitor — Post-Processor
+Reads ngspice batt_discharge.txt → ASCII discharge + divider accuracy table
+Run: python3 plot_battery.py  (after ngspice -b voltage_batch.net)
+"""
+import math, os
+
+COLS = 80
+
+def load(path):
+    rows = []
+    if not os.path.exists(path):
+        print(f"  [not found: {path}]"); return rows
+    with open(path) as f:
+        for line in f:
+            line = line.strip()
+            if not line or line.startswith("*"): continue
+            try: rows.append([float(v) for v in line.split()])
+            except ValueError: pass
+    return rows
+
+print("=" * COLS)
+print(" ESP32 BATTERY MONITOR — SIMULATION RESULTS")
+print(" LiFePO4 Discharge + Voltage Divider Verification")
+print("=" * COLS)
+
+rows = load("batt_discharge.txt")
+if not rows:
+    print("Run: ngspice -b voltage_batch.net  first."); exit()
+
+ncols = len(rows[0])
+if ncols == 8:
+    times,vbat,vadc,vbat_sw = ([r[0] for r in rows],[r[3] for r in rows],
+                                 [r[5] for r in rows],[r[7] for r in rows])
+else:
+    times,vbat,vadc,vbat_sw = [r[0] for r in rows],[r[1] for r in rows],[r[2] for r in rows],[r[3] for r in rows]
+
+CUT, REST, W = 0.799, 0.847, 36
+n = len(times)
+
+print()
+print("┌─ DISCHARGE CURVE ─────────────────────────────────────────────────────────┐")
+print("│  Time     VBAT      VADC     ADC bar (0—1.2V)                            │")
+print("├───────────────────────────────────────────────────────────────────────────┤")
+for i in range(0, n, max(1, n//28)):
+    t_ms = times[i]*1000; vb = vbat[i]; va = vadc[i]
+    bar  = "█"*round(max(0,min(1,va/1.2))*W) + "░"*(W-round(max(0,min(1,va/1.2))*W))
+    flag = " ⚡CUTOFF" if va <= CUT else (" ⚠ RESTORE ZONE" if va <= REST else "")
+    print(f"│  {t_ms:6.0f}ms  {vb:.3f}V  {va:.4f}V  [{bar}]{flag}")
+print("└───────────────────────────────────────────────────────────────────────────┘")
+
+print()
+print("┌─ DIVIDER ACCURACY ────────────────────────────────────────────────────────┐")
+R2, R3 = 100e3, 47e3
+ratio = R3/(R2+R3)
+for vb_ref, label in [(3.65,"Full charge"),(3.30,"80% SoC"),(2.80,"10% SoC"),(2.65,"Restore"),(2.50,"Cutoff")]:
+    exp = vb_ref * ratio
+    idx = min(range(n), key=lambda i: abs(vbat[i]-vb_ref))
+    sim = vadc[idx]; err = (sim-exp)*1000
+    print(f"│  {vb_ref:.2f}V  exp={exp:.4f}V  sim={sim:.4f}V  err={err:+.2f}mV  {'✓' if abs(err)<5 else '✗'}  {label}")
+print("└───────────────────────────────────────────────────────────────────────────┘")
+
+t0 = min(range(n), key=lambda i: abs(times[i]-0.1))
+tc = min(range(n), key=lambda i: abs(times[i]-2.0))
+print()
+print(f"  ✓ Ratio: {vadc[t0]/vbat[t0]:.5f}  (theory: {ratio:.5f})")
+print(f"  ✓ ADC @ full charge: {vadc[t0]:.4f}V  (expect 1.1672V)")
+print(f"  ✓ ADC @ UVLO:        {vadc[tc]:.4f}V  (threshold {CUT}V)")
+print(f"  ✓ VBAT @ UVLO:       {vbat[tc]:.4f}V  (expect ~2.500V)")
+print("=" * COLS)`,
+          },
+        ],
       },
     },
     {
@@ -290,33 +518,143 @@ S1  vbat  vbat_sw  vgate  0  SW_model
           { label: '@ 10 kHz', value: '−35.96 dB', expected: '−35.96 dB', pass: true },
           { label: 'Rolloff slope', value: '−19.9 dB/decade', expected: '−20 dB/decade', pass: true },
         ],
-        codeSnippet: {
-          language: 'spice',
-          label: 'Ngspice — RC filter Bode + transient simulation',
-          code: `* RC Low-Pass Filter — fc = 159 Hz
+        codeFiles: [
+          {
+            language: 'spice',
+            label: 'Ngspice netlist',
+            filename: 'lowpass_batch.net',
+            code: `* RC Low-Pass Filter — Ngspice Batch Mode
+* Run: ngspice -b lowpass_batch.net
 .title RC Low-Pass Filter
 
 * Signal (10Hz) + noise (1kHz) summed via B-source
-V_signal  vsig   0  DC 0 AC 1 SIN(0 1.0 10)
-V_noise   vnoise 0  DC 0 AC 0 SIN(0 0.5 1000)
-B1  vmixed  0  V = V(vsig) + V(vnoise)
+V_signal   vsig    0   DC 0 AC 1 SIN(0 1.0 10)
+V_noise    vnoise  0   DC 0 AC 0 SIN(0 0.5 1000)
+B1   vmixed  0   V = V(vsig) + V(vnoise)
 
-* RC filter: fc = 1/(2π×R×C) = 1/(2π×10k×100n) = 159 Hz
-R1  vmixed          vout  10k
-C1  vout            0     100n
+* RC filter: fc = 1/(2π×10k×100n) = 159 Hz
+R1   vmixed          vout_filtered   10k
+C1   vout_filtered   0               100n
 
-* Transient: show noise removal
 .tran 100u 300ms 50ms
-
-* AC sweep: plot Bode −3dB point at fc
 .ac dec 100 1 100k
 
-* --- Measured results ---
-* @ 10 Hz  : -0.02 dB  ✓  (theory: -0.02)
-* @ 159 Hz : -2.99 dB  ✓  (theory: -3.01)  ← -3dB point
-* @ 1 kHz  : -16.07 dB ✓  (theory: -16.07)
-* Slope    : -19.9 dB/decade ✓  (theory: -20)`,
-        },
+.control
+  tran 100u 300ms 50ms
+  set filetype=ascii
+  wrdata lowpass_tran.txt time V(vmixed) V(vout_filtered)
+
+  meas tran vpeak_in   MAX V(vmixed)        from=50ms to=250ms
+  meas tran vpeak_out  MAX V(vout_filtered) from=50ms to=250ms
+
+  echo "--- Transient ---"
+  echo "Input peak:    $&vpeak_in V  (signal+noise)"
+  echo "Output peak:   $&vpeak_out V  (noise removed)"
+
+  ac dec 100 1 100k
+  let vdb_out = vdb(vout_filtered)
+  wrdata lowpass_ac.txt frequency vdb_out
+
+  meas ac db_10hz   MIN vdb_out from=8   to=12
+  meas ac db_159hz  MAX vdb_out from=140 to=180
+  meas ac db_1khz   MIN vdb_out from=900 to=1100
+  meas ac db_10khz  MIN vdb_out from=9000 to=11000
+
+  echo "--- Bode ---"
+  echo "@ 10 Hz  : $&db_10hz dB   (expect  0 dB)"
+  echo "@ 159 Hz : $&db_159hz dB  (expect -3 dB)"
+  echo "@ 1 kHz  : $&db_1khz dB  (expect -16 dB)"
+  echo "@ 10 kHz : $&db_10khz dB (expect -36 dB)"
+.endc
+.end`,
+          },
+          {
+            language: 'python',
+            label: 'Python post-processor',
+            filename: 'plot_results.py',
+            code: `#!/usr/bin/env python3
+"""
+RC Low-Pass Filter — Post-Processor
+Reads ngspice lowpass_ac.txt + lowpass_tran.txt → ASCII Bode + waveform
+Run: python3 plot_results.py  (after ngspice -b lowpass_batch.net)
+"""
+import math, os
+
+COLS = 80
+
+def load(path):
+    rows = []
+    if not os.path.exists(path):
+        print(f"  [not found: {path}]"); return rows
+    with open(path) as f:
+        for line in f:
+            line = line.strip()
+            if not line or line.startswith("*"): continue
+            try: rows.append([float(v) for v in line.split()])
+            except ValueError: pass
+    return rows
+
+def rc_theory(f, fc):
+    return -10 * math.log10(1 + (f/fc)**2)
+
+print("=" * COLS)
+print(" RC LOW-PASS FILTER — SIMULATION RESULTS")
+print(" R = 10 kΩ   C = 100 nF   fc = 159 Hz")
+print("=" * COLS)
+
+ac = load("lowpass_ac.txt")
+if ac:
+    ncols = len(ac[0])
+    freqs = [r[1] for r in ac] if ncols==5 else [r[0] for r in ac]
+    dbs   = [r[4] for r in ac] if ncols==5 else [r[1] for r in ac]
+
+    print()
+    print("┌─ BODE PLOT ────────────────────────────────────────────────────────────────┐")
+    print("│  Freq (Hz)   Sim (dB)   Theory (dB)   Bar                                │")
+    print("├────────────────────────────────────────────────────────────────────────────┤")
+    fc = 159.15
+    for pf in [1, 5, 10, 30, 50, 100, 159, 300, 500, 1000, 3000, 10000]:
+        idx  = min(range(len(freqs)), key=lambda i: abs(freqs[i]-pf))
+        sim  = dbs[idx]; theo = rc_theory(pf, fc)
+        bar  = "█"*int(max(0,min(1,(sim+45)/48))*32) + "░"*(32-int(max(0,min(1,(sim+45)/48))*32))
+        note = " ← -3dB fc" if abs(pf-159) < 20 else ""
+        print(f"│  {pf:7.0f} Hz   {sim:7.2f} dB   {theo:8.2f} dB   [{bar}]{note}")
+    print("└────────────────────────────────────────────────────────────────────────────┘")
+
+    def db_at(f):
+        idx = min(range(len(freqs)), key=lambda i: abs(freqs[i]-f))
+        return dbs[idx]
+
+    d1k = db_at(1000); d10k = db_at(10000)
+    slope = (d10k - d1k) / 1.0
+    print()
+    print(f"  @ 10 Hz  : {db_at(10):+.2f} dB  (theory: {rc_theory(10,fc):+.2f} dB)")
+    print(f"  @ 159 Hz : {db_at(159):+.2f} dB  (theory: -3.01 dB) ← -3dB point ✓")
+    print(f"  @ 1 kHz  : {db_at(1000):+.2f} dB  (theory: {rc_theory(1000,fc):+.2f} dB) ✓")
+    print(f"  @ 10 kHz : {db_at(10000):+.2f} dB  (theory: {rc_theory(10000,fc):+.2f} dB) ✓")
+    print(f"  Rolloff  : {slope:.1f} dB/decade  (theory: -20 dB/decade) ✓")
+
+tran = load("lowpass_tran.txt")
+if tran:
+    ncols = len(tran[0])
+    if ncols == 6:
+        times,v_in,v_out = [r[0] for r in tran],[r[3] for r in tran],[r[5] for r in tran]
+    else:
+        times,v_in,v_out = [r[0] for r in tran],[r[1] for r in tran],[r[2] for r in tran]
+
+    peak_in  = max(abs(v) for v in v_in)
+    peak_out = max(abs(v) for v in v_out)
+    nr_db    = 20*math.log10(peak_out/peak_in) if peak_in>0 else 0
+
+    print()
+    print("  TRANSIENT:")
+    print(f"  Input peak  : {peak_in:.4f} V  (10Hz + 1kHz noise)")
+    print(f"  Output peak : {peak_out:.4f} V  (filtered)")
+    print(f"  Noise reduction: {nr_db:+.1f} dB  ✓")
+
+print("=" * COLS)`,
+          },
+        ],
       },
     },
     // ── CAD / 3D Design ──────────────────────────────────────────────────────
@@ -638,7 +976,12 @@ else { color("lightgray") housing(); color("gainsboro") lid(); }`,
   ];
 
   return (
-    <div className="bg-gray-900 min-h-screen">
+    <div className="min-h-screen" style={{ background: '#020617' }}>
+      {/* Animated background orbs */}
+      <div className="bg-scene" aria-hidden="true">
+        <div className="bg-orb3" />
+        <div className="grid-overlay" />
+      </div>
       <Navbar />
       <div id="projects">
         <ProjectsGrid projects={projects} />

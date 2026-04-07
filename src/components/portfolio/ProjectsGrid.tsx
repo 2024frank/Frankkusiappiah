@@ -40,7 +40,9 @@ export default function ProjectsGrid({ projects }: ProjectsGridProps) {
 
   return (
     <>
-      <section id="projects" className="pt-20 pb-32 bg-gradient-to-b from-gray-900 via-gray-900 to-gray-800 min-h-screen">
+      <section id="projects" className="pt-24 pb-32 min-h-screen relative overflow-hidden">
+        <div className="absolute inset-0 soft-grid opacity-15 pointer-events-none" />
+        <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-cyan-500/40 to-transparent" />
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
           {/* ── Hero header ─────────────────────────────────────────────── */}
@@ -54,28 +56,36 @@ export default function ProjectsGrid({ projects }: ProjectsGridProps) {
             <motion.div
               initial={{ opacity: 0, scale: 0.5 }}
               animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: 0.1, duration: 0.6 }}
-              className="mb-8"
+              transition={{ delay: 0.1, duration: 0.7, type: 'spring', stiffness: 200 }}
+              className="mb-10"
             >
-              <div className="relative w-56 h-56 mx-auto">
-                <div className="absolute inset-0 bg-gradient-to-r from-cyan-500 to-blue-500 rounded-full animate-pulse opacity-75 blur-xl" />
+              <div className="relative w-52 h-52 mx-auto">
+                {/* Outer spinning ring */}
+                <div className="spin-slow absolute inset-[-12px] rounded-full border border-dashed border-cyan-500/30" />
+                {/* Inner spinning ring */}
+                <div className="spin-slow-reverse absolute inset-[-6px] rounded-full border border-cyan-400/20" />
+                {/* Glow */}
+                <div className="absolute inset-0 bg-gradient-to-r from-cyan-400 to-blue-500 rounded-full opacity-60 blur-2xl" />
+                {/* Photo */}
                 <img
                   src="/images/profile.jpg"
                   alt="Frank Kusi Appiah"
-                  className="relative w-full h-full rounded-full object-cover object-top border-4 border-cyan-500/50 shadow-2xl shadow-cyan-500/50"
+                  className="relative w-full h-full rounded-full object-cover border-2 border-cyan-400/60 shadow-2xl shadow-cyan-500/50"
                   style={{ objectPosition: 'center 20%' }}
                 />
+                {/* Online indicator */}
+                <div className="absolute bottom-2 right-2 w-4 h-4 bg-emerald-400 rounded-full border-2 border-gray-900 shadow-lg shadow-emerald-400/50" />
               </div>
             </motion.div>
 
-            <h1 className="text-5xl md:text-6xl font-bold text-white mb-3">
+            <h1 className="text-5xl md:text-7xl font-black text-white mb-3 tracking-tight">
               Frank Kusi{' '}
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-500">
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 via-cyan-400 to-blue-400">
                 Appiah
               </span>
             </h1>
-            <p className="text-xl text-gray-400 mb-2">i write code, i build stuff, i learn things on the fly</p>
-            <p className="text-sm text-gray-500 mb-10 max-w-xl mx-auto">
+            <p className="text-xl text-gray-300 mb-2">I build products at the edge of hardware and software.</p>
+            <p className="text-sm text-gray-400 mb-10 max-w-xl mx-auto">
               Full-Stack Engineer · IoT Systems · PCB Design · 3D CAD · Circuit Simulation
             </p>
 
@@ -87,7 +97,7 @@ export default function ProjectsGrid({ projects }: ProjectsGridProps) {
                 { label: 'CAD Models', value: '3' },
                 { label: 'Simulations', value: '3' },
               ].map(stat => (
-                <div key={stat.label} className="text-center">
+                <div key={stat.label} className="text-center glass-panel px-6 py-4 rounded-xl">
                   <div className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-500">
                     {stat.value}
                   </div>
@@ -112,8 +122,8 @@ export default function ProjectsGrid({ projects }: ProjectsGridProps) {
                   onClick={() => setActiveFilter(opt)}
                   className={`px-4 py-1.5 rounded-full text-sm font-medium border transition-all duration-200 ${
                     activeFilter === opt
-                      ? 'bg-cyan-500 border-cyan-500 text-gray-900'
-                      : 'border-gray-600 text-gray-400 hover:border-cyan-500 hover:text-cyan-400'
+                      ? 'bg-cyan-400 border-cyan-300 text-slate-950'
+                      : 'border-gray-600 text-gray-300 hover:border-cyan-400 hover:text-cyan-300 hover:bg-cyan-400/10'
                   }`}
                 >
                   {opt}
@@ -147,7 +157,7 @@ export default function ProjectsGrid({ projects }: ProjectsGridProps) {
                       transition={{ delay: index * 0.05, duration: 0.4 }}
                       whileHover={{ y: -6 }}
                       onClick={() => setSelectedProject(project)}
-                      className={`group relative bg-gray-800/60 backdrop-blur-sm border border-gray-700/60 rounded-2xl overflow-hidden cursor-pointer transition-all duration-300 hover:border-cyan-500/60 hover:shadow-xl hover:shadow-cyan-500/10 ${
+                      className={`group relative glass-panel rounded-2xl overflow-hidden cursor-pointer transition-all duration-300 hover:border-cyan-400/60 hover:shadow-2xl hover:shadow-cyan-500/15 ${
                         isFeatured ? 'md:col-span-2 xl:col-span-2' : ''
                       }`}
                     >
@@ -168,7 +178,7 @@ export default function ProjectsGrid({ projects }: ProjectsGridProps) {
                             <Icon className="w-16 h-16 text-gray-700" />
                           </div>
                         )}
-                        <div className="absolute inset-0 bg-gradient-to-t from-gray-900 via-gray-900/40 to-transparent" />
+                        <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/40 to-transparent" />
 
                         {/* Gallery badge */}
                         {project.gallery_images && project.gallery_images.length > 1 && (
@@ -180,7 +190,7 @@ export default function ProjectsGrid({ projects }: ProjectsGridProps) {
 
                         {/* Featured star */}
                         {isFeatured && (
-                          <div className="absolute top-3 left-3 px-2.5 py-1 bg-cyan-500/20 border border-cyan-500/40 backdrop-blur-sm rounded-full text-cyan-400 text-xs font-semibold">
+                          <div className="absolute top-3 left-3 px-2.5 py-1 bg-cyan-400/20 border border-cyan-300/40 backdrop-blur-sm rounded-full text-cyan-300 text-xs font-semibold">
                             ★ Featured
                           </div>
                         )}
@@ -222,7 +232,7 @@ export default function ProjectsGrid({ projects }: ProjectsGridProps) {
                           )}
                         </div>
 
-                        <h3 className="text-lg font-bold text-white mb-2 group-hover:text-cyan-400 transition-colors line-clamp-2 leading-snug">
+                        <h3 className="text-lg font-bold text-white mb-2 group-hover:text-cyan-300 transition-colors line-clamp-2 leading-snug">
                           {project.title}
                         </h3>
 
@@ -248,7 +258,7 @@ export default function ProjectsGrid({ projects }: ProjectsGridProps) {
                       </div>
 
                       {/* Hover glow border */}
-                      <div className="absolute inset-0 border-2 border-cyan-500/0 group-hover:border-cyan-500/30 rounded-2xl transition-all duration-300 pointer-events-none" />
+                      <div className="absolute inset-0 border-2 border-cyan-400/0 group-hover:border-cyan-300/30 rounded-2xl transition-all duration-300 pointer-events-none" />
                     </motion.div>
                   );
                 })}

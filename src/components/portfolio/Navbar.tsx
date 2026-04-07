@@ -32,7 +32,7 @@ export default function Navbar() {
       transition={{ duration: 0.5 }}
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
         scrolled
-          ? 'bg-gray-900/95 backdrop-blur-md border-b border-cyan-500/20 shadow-lg shadow-black/30'
+          ? 'bg-slate-950/85 backdrop-blur-xl border-b border-cyan-400/20 shadow-xl shadow-cyan-950/40'
           : 'bg-transparent'
       }`}
     >
@@ -43,7 +43,7 @@ export default function Navbar() {
             onClick={() => handleNav('#projects')}
             className="flex items-center gap-2 group"
           >
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center group-hover:shadow-lg group-hover:shadow-cyan-500/40 transition-shadow duration-300">
+            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-cyan-400 to-blue-500 flex items-center justify-center group-hover:scale-105 group-hover:shadow-lg group-hover:shadow-cyan-500/40 transition-all duration-300">
               <Cpu className="w-4 h-4 text-white" />
             </div>
             <span className="font-bold text-white text-sm tracking-wide">
@@ -57,14 +57,14 @@ export default function Navbar() {
               <button
                 key={link.href}
                 onClick={() => handleNav(link.href)}
-                className="px-4 py-2 text-sm font-medium text-gray-300 hover:text-cyan-400 hover:bg-cyan-500/10 rounded-lg transition-all duration-200"
+              className="px-4 py-2 text-sm font-medium text-gray-300 hover:text-cyan-300 hover:bg-cyan-400/10 rounded-lg transition-all duration-200"
               >
                 {link.label}
               </button>
             ))}
             <button
               onClick={() => handleNav('#contact')}
-              className="ml-2 px-4 py-2 text-sm font-semibold bg-gradient-to-r from-cyan-500 to-blue-500 text-white rounded-lg hover:from-cyan-400 hover:to-blue-400 transition-all duration-200 hover:shadow-lg hover:shadow-cyan-500/30"
+              className="ml-2 px-4 py-2 text-sm font-semibold bg-gradient-to-r from-cyan-400 to-blue-500 text-slate-950 rounded-lg hover:from-cyan-300 hover:to-blue-300 transition-all duration-200 hover:shadow-lg hover:shadow-cyan-400/40"
             >
               Hire Me
             </button>

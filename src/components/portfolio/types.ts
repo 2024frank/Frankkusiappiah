@@ -10,9 +10,10 @@ export interface SimulationResult {
   pass: boolean;
 }
 
-export interface CodeSnippet {
+export interface CodeFile {
   language: string;
   label: string;
+  filename: string;
   code: string;
 }
 
@@ -20,7 +21,10 @@ export interface ProjectDetails {
   highlights?: string[];
   specs?: ProjectSpec[];
   simulationResults?: SimulationResult[];
-  codeSnippet?: CodeSnippet;
+  /** legacy single-file — still supported */
+  codeSnippet?: { language: string; label: string; code: string };
+  /** multi-file code viewer */
+  codeFiles?: CodeFile[];
   designNotes?: string[];
 }
 
