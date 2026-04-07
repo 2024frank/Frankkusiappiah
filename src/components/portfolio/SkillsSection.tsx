@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Cpu, Wrench, Code, Cloud, Database, Smartphone, Box, Layers, ChevronDown } from 'lucide-react';
+import TiltCard from './TiltCard';
 
 const skillCategories = [
   {
@@ -175,8 +176,10 @@ export default function SkillsSection() {
                   initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, scale: 0.95 }}
                   transition={{ delay: ci * 0.06, duration: 0.4 }}
-                  className={`group glass rounded-2xl p-5 hover:shadow-xl hover:${c.glow} transition-all duration-300 hover:border-current hover:scale-[1.02] cursor-pointer ${c.border}`}
                   onClick={() => setExpandedCard(isExpanded ? null : cat.category)}
+                >
+                <TiltCard maxTilt={12} scale={1.04} glare
+                  className={`group glass rounded-2xl p-5 hover:shadow-xl hover:${c.glow} transition-all duration-300 cursor-pointer ${c.border} w-full h-full`}
                 >
                   {/* Card header */}
                   <div className="flex items-center justify-between mb-5">
@@ -223,6 +226,7 @@ export default function SkillsSection() {
                       </div>
                     )}
                   </div>
+                </TiltCard>
                 </motion.div>
               );
             })}

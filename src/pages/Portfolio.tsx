@@ -1,12 +1,15 @@
+import { useState } from 'react';
 import ProjectsGrid from '../components/portfolio/ProjectsGrid';
 import ContactSection from '../components/portfolio/ContactSection';
 import AboutSection from '../components/portfolio/AboutSection';
 import SkillsSection from '../components/portfolio/SkillsSection';
 import Navbar from '../components/portfolio/Navbar';
 import CircuitBackground from '../components/portfolio/CircuitBackground';
+import SplashScreen from '../components/portfolio/SplashScreen';
 import type { Project } from '../components/portfolio/types';
 
 export default function Portfolio() {
+  const [ready, setReady] = useState(false);
   const projects: Project[] = [
     // ── IoT / Data ──────────────────────────────────────────────────────────
     {
@@ -978,9 +981,8 @@ else { color("lightgray") housing(); color("gainsboro") lid(); }`,
 
   return (
     <div className="min-h-screen" style={{ background: '#020617' }}>
-      {/* 3D WebGL circuit network */}
-      <CircuitBackground />
-      {/* CSS orb fallback for low-end devices */}
+      <SplashScreen onDone={() => setReady(true)} />
+      {ready && <CircuitBackground />}
       <div className="bg-scene" aria-hidden="true">
         <div className="bg-orb3" />
         <div className="grid-overlay" />

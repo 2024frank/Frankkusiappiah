@@ -5,6 +5,7 @@ import { format } from 'date-fns';
 import ProjectModal from './ProjectModal';
 import TiltCard from './TiltCard';
 import FloatingChips from './FloatingChips';
+import AnimatedHeroText, { Typewriter, CountUp } from './AnimatedHeroText';
 import type { Project } from './types';
 
 interface ProjectsGridProps {
@@ -82,41 +83,48 @@ export default function ProjectsGrid({ projects }: ProjectsGridProps) {
               </div>
             </motion.div>
 
-            <h1 className="text-5xl md:text-7xl font-black text-white mb-3 tracking-tight">
-              Frank Kusi{' '}
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 via-cyan-400 to-blue-400">
-                Appiah
-              </span>
-            </h1>
-            <p className="text-xl text-gray-300 mb-2">I build products at the edge of hardware and software.</p>
-            <p className="text-sm text-gray-400 mb-10 max-w-xl mx-auto">
-              Full-Stack Engineer · IoT Systems · PCB Design · 3D CAD · Circuit Simulation
+            {/* 3D letter-flip name */}
+            <AnimatedHeroText />
+
+            {/* Typewriter subtitle */}
+            <p className="text-lg md:text-xl text-gray-300 mb-2 h-7">
+              <Typewriter text="I build things at the intersection of atoms and bits." delay={1.4} />
+            </p>
+            <p className="text-sm text-gray-500 mb-10 max-w-xl mx-auto font-mono">
+              Full-Stack · IoT · PCB Design · 3D CAD · Circuit Simulation
             </p>
 
-            {/* Stats row */}
-            <div className="flex flex-wrap justify-center gap-6 mb-12">
+            {/* Count-up stats */}
+            <div className="flex flex-wrap justify-center gap-4 mb-14">
               {[
-                { label: 'Projects', value: String(projects.length) },
-                { label: 'PCB Designs', value: '3' },
-                { label: 'CAD Models', value: '3' },
-                { label: 'Simulations', value: '3' },
-              ].map(stat => (
-                <div key={stat.label} className="text-center glass-panel px-6 py-4 rounded-xl">
-                  <div className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-500">
-                    {stat.value}
+                { label: 'Projects',    num: projects.length, suffix: '' },
+                { label: 'PCB Designs', num: 3,  suffix: '' },
+                { label: 'CAD Models',  num: 3,  suffix: '' },
+                { label: 'Sensor Reads/Day', num: 5000, suffix: '+' },
+              ].map((s, i) => (
+                <TiltCard key={s.label} maxTilt={18} scale={1.08} glare
+                  className="glass-panel px-6 py-4 rounded-xl text-center cursor-default">
+                  <div className="text-3xl font-black gradient-text-cyan">
+                    <CountUp target={s.num} suffix={s.suffix} delay={i * 120} duration={1400} />
                   </div>
-                  <div className="text-xs text-gray-500 uppercase tracking-widest">{stat.label}</div>
-                </div>
+                  <div className="text-[10px] text-gray-500 uppercase tracking-widest mt-0.5">{s.label}</div>
+                </TiltCard>
               ))}
             </div>
 
-            <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
+            <motion.h2
+              initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 2.2, duration: 0.6 }}
+              className="text-3xl md:text-4xl font-black text-white mb-4"
+            >
               Things I Have{' '}
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-500">
-                Built
-              </span>
-            </h2>
-            <div className="w-24 h-1 bg-gradient-to-r from-cyan-500 to-blue-500 mx-auto rounded-full mb-8" />
+              <span className="gradient-text-cyan">Built</span>
+            </motion.h2>
+            <motion.div
+              initial={{ scaleX: 0 }} animate={{ scaleX: 1 }}
+              transition={{ delay: 2.4, duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+              className="w-24 h-1 bg-gradient-to-r from-cyan-500 to-blue-500 mx-auto rounded-full mb-8 origin-left"
+            />
 
             {/* ── Category filter tabs ─────────────────────────────────── */}
             <div className="flex flex-wrap justify-center gap-2">
