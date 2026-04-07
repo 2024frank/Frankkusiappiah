@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Cpu, Wrench, Code, Cloud, Database, Smartphone } from 'lucide-react';
+import { Box } from 'lucide-react';
 
 export default function SkillsSection() {
   const [selectedCategory, setSelectedCategory] = useState('all');
@@ -66,7 +67,9 @@ export default function SkillsSection() {
         { name: 'Sensor Networks', level: 90 },
         { name: 'IoT Systems', level: 92 },
         { name: 'Real-time Processing', level: 88 },
-        { name: 'Embedded Systems', level: 83 }
+        { name: 'Embedded Systems', level: 83 },
+        { name: 'Battery Management', level: 80 },
+        { name: 'Solar Power Systems', level: 78 }
       ],
       color: 'indigo',
       category: 'iot'
@@ -80,10 +83,23 @@ export default function SkillsSection() {
         { name: 'Ngspice 40', level: 80 },
         { name: 'Analog Circuit Design', level: 83 },
         { name: 'Schematic Capture', level: 86 },
-        { name: 'PCB Layout (4-layer)', level: 80 }
+        { name: '4-Layer PCB Layout', level: 80 }
       ],
       color: 'cyan',
       category: 'pcb'
+    },
+    {
+      icon: Box,
+      title: 'CAD & 3D Design',
+      skills: [
+        { name: 'OpenSCAD', level: 84 },
+        { name: 'Parametric Modelling', level: 86 },
+        { name: 'FDM 3D Printing', level: 88 },
+        { name: 'Enclosure Design', level: 82 },
+        { name: 'Mechanical Tolerancing', level: 78 }
+      ],
+      color: 'emerald',
+      category: 'cad'
     },
     {
       icon: Smartphone,
@@ -94,7 +110,7 @@ export default function SkillsSection() {
         { name: 'iOS Development', level: 84 },
         { name: 'Cross-platform', level: 80 }
       ],
-      color: 'emerald',
+      color: 'pink',
       category: 'mobile'
     }
   ];
