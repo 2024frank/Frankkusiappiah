@@ -3,20 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { ExternalLink, Github, Calendar, Image, Cpu, Code2, Box, Layers } from 'lucide-react';
 import { format } from 'date-fns';
 import ProjectModal from './ProjectModal';
-
-interface Project {
-  id: string;
-  title: string;
-  description: string;
-  category: string;
-  image_url?: string;
-  gallery_images?: string[];
-  github_url?: string;
-  demo_url?: string;
-  completion_date?: string;
-  technologies?: string[];
-  featured?: boolean;
-}
+import type { Project } from './types';
 
 interface ProjectsGridProps {
   projects: Project[];
