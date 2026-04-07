@@ -3,6 +3,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { ExternalLink, Github, Calendar, Image, Cpu, Code2, Box, Layers } from 'lucide-react';
 import { format } from 'date-fns';
 import ProjectModal from './ProjectModal';
+import TiltCard from './TiltCard';
+import FloatingChips from './FloatingChips';
 import type { Project } from './types';
 
 interface ProjectsGridProps {
@@ -60,6 +62,8 @@ export default function ProjectsGrid({ projects }: ProjectsGridProps) {
               className="mb-10"
             >
               <div className="relative w-52 h-52 mx-auto">
+                {/* Floating tech chips */}
+                <FloatingChips />
                 {/* Outer spinning ring */}
                 <div className="spin-slow absolute inset-[-12px] rounded-full border border-dashed border-cyan-500/30" />
                 {/* Inner spinning ring */}
@@ -155,11 +159,17 @@ export default function ProjectsGrid({ projects }: ProjectsGridProps) {
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, scale: 0.95 }}
                       transition={{ delay: index * 0.05, duration: 0.4 }}
-                      whileHover={{ y: -6 }}
+                      className={isFeatured ? 'md:col-span-2 xl:col-span-2' : ''}
+                    >
+                    <TiltCard
+                      maxTilt={10}
+                      scale={1.03}
+                      glare
+                      className="w-full h-full"
+                    >
+                    <div
                       onClick={() => setSelectedProject(project)}
-                      className={`group relative glass-panel rounded-2xl overflow-hidden cursor-pointer transition-all duration-300 hover:border-cyan-400/60 hover:shadow-2xl hover:shadow-cyan-500/15 ${
-                        isFeatured ? 'md:col-span-2 xl:col-span-2' : ''
-                      }`}
+                      className="group relative glass-panel rounded-2xl overflow-hidden cursor-pointer transition-all duration-300 hover:border-cyan-400/60 hover:shadow-2xl hover:shadow-cyan-500/20"
                     >
                       {/* Thumbnail */}
                       <div className={`relative overflow-hidden ${isFeatured ? 'h-60' : 'h-44'}`}>
@@ -259,6 +269,8 @@ export default function ProjectsGrid({ projects }: ProjectsGridProps) {
 
                       {/* Hover glow border */}
                       <div className="absolute inset-0 border-2 border-cyan-400/0 group-hover:border-cyan-300/30 rounded-2xl transition-all duration-300 pointer-events-none" />
+                    </div>
+                    </TiltCard>
                     </motion.div>
                   );
                 })}

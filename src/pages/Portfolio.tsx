@@ -3,6 +3,7 @@ import ContactSection from '../components/portfolio/ContactSection';
 import AboutSection from '../components/portfolio/AboutSection';
 import SkillsSection from '../components/portfolio/SkillsSection';
 import Navbar from '../components/portfolio/Navbar';
+import CircuitBackground from '../components/portfolio/CircuitBackground';
 import type { Project } from '../components/portfolio/types';
 
 export default function Portfolio() {
@@ -977,7 +978,9 @@ else { color("lightgray") housing(); color("gainsboro") lid(); }`,
 
   return (
     <div className="min-h-screen" style={{ background: '#020617' }}>
-      {/* Animated background orbs */}
+      {/* 3D WebGL circuit network */}
+      <CircuitBackground />
+      {/* CSS orb fallback for low-end devices */}
       <div className="bg-scene" aria-hidden="true">
         <div className="bg-orb3" />
         <div className="grid-overlay" />
