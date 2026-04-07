@@ -1,0 +1,177 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 480" font-family="monospace" font-size="11">
+
+  <!-- Background -->
+  <rect width="900" height="480" fill="#1a1a2e"/>
+
+  <!-- Title bar -->
+  <rect x="0" y="0" width="900" height="36" fill="#1a1a3e" rx="0"/>
+  <text x="16" y="23" fill="#e2e8f0" font-size="14" font-weight="bold">Analog Low-Pass Filter — RC and Sallen-Key Simulation</text>
+  <text x="700" y="23" fill="#64748b" font-size="11">LTspice · Ngspice</text>
+
+  <!-- ===== CIRCUIT 1: RC 1st Order ===== -->
+  <text x="20" y="60" fill="#60a5fa" font-size="12" font-weight="bold">Circuit A — 1st Order RC Filter  (fc = 159 Hz)</text>
+
+  <!-- Input source -->
+  <circle cx="60" cy="155" r="22" fill="none" stroke="#94a3b8" stroke-width="1.5"/>
+  <text x="60" y="150" fill="#a78bfa" text-anchor="middle" font-size="8">10Hz</text>
+  <text x="60" y="162" fill="#fb7185" text-anchor="middle" font-size="8">+1kHz</text>
+  <text x="60" y="174" fill="#94a3b8" text-anchor="middle" font-size="7">noise</text>
+  <line x1="60" y1="133" x2="60" y2="90" stroke="#94a3b8" stroke-width="1.2"/>
+  <text x="55" y="86" fill="#94a3b8" font-size="7">+</text>
+  <line x1="60" y1="177" x2="60" y2="200" stroke="#4ade80" stroke-width="1.5"/>
+  <line x1="20" y1="200" x2="200" y2="200" stroke="#4ade80" stroke-width="1.5"/>
+
+  <!-- R1 resistor symbol -->
+  <line x1="60" y1="90" x2="110" y2="90" stroke="#f97316" stroke-width="2"/>
+  <rect x="110" y="80" width="60" height="20" fill="none" stroke="#e2e8f0" stroke-width="1.5" rx="2"/>
+  <text x="140" y="94" fill="#e2e8f0" text-anchor="middle" font-size="10">R = 10kΩ</text>
+  <line x1="170" y1="90" x2="200" y2="90" stroke="#fbbf24" stroke-width="2"/>
+
+  <!-- C1 capacitor symbol -->
+  <line x1="200" y1="90" x2="200" y2="110" stroke="#fbbf24" stroke-width="2"/>
+  <line x1="185" y1="110" x2="215" y2="110" stroke="#fbbf24" stroke-width="3"/>
+  <line x1="185" y1="116" x2="215" y2="116" stroke="#fbbf24" stroke-width="3"/>
+  <line x1="200" y1="116" x2="200" y2="130" stroke="#4ade80" stroke-width="2"/>
+  <line x1="200" y1="130" x2="200" y2="200" stroke="#4ade80" stroke-width="1.5"/>
+  <text x="220" y="108" fill="#e2e8f0" font-size="10">C = 100nF</text>
+  <text x="220" y="120" fill="#64748b" font-size="8">fc = 1/(2π×10k×100n)</text>
+  <text x="220" y="131" fill="#60a5fa" font-size="9" font-weight="bold">fc = 159.15 Hz</text>
+
+  <!-- Output probe -->
+  <circle cx="200" cy="90" r="4" fill="#fbbf24"/>
+  <text x="200" y="78" fill="#fbbf24" text-anchor="middle" font-size="8">Vout</text>
+
+  <!-- Transfer function -->
+  <rect x="20" y="215" width="310" height="70" fill="#0f172a" stroke="#3b82f6" stroke-width="1" rx="3"/>
+  <text x="175" y="232" fill="#3b82f6" text-anchor="middle" font-size="9" font-weight="bold">Transfer Function: H(f) = 1 / (1 + j·f/fc)</text>
+  <text x="30" y="248" fill="#94a3b8" font-size="8">@ 10Hz  (signal):  |H| = 0.998  →  -0.017 dB  ✓ passes</text>
+  <text x="30" y="261" fill="#f87171" font-size="8">@ 1kHz (noise):   |H| = 0.157  →  -16.1 dB  ✓ attenuates</text>
+  <text x="30" y="274" fill="#94a3b8" font-size="8">Rolloff slope: -20 dB/decade above fc</text>
+
+  <!-- ===== CIRCUIT 2: Sallen-Key 2nd Order ===== -->
+  <text x="360" y="60" fill="#34d399" font-size="12" font-weight="bold">Circuit B — 2nd Order Sallen-Key (fc = 112 Hz)</text>
+
+  <!-- Input -->
+  <circle cx="380" cy="155" r="22" fill="none" stroke="#94a3b8" stroke-width="1.5"/>
+  <text x="380" y="148" fill="#a78bfa" text-anchor="middle" font-size="7">Signal</text>
+  <text x="380" y="160" fill="#fb7185" text-anchor="middle" font-size="7">+Noise</text>
+  <line x1="380" y1="133" x2="380" y2="90" stroke="#94a3b8" stroke-width="1.2"/>
+  <line x1="380" y1="177" x2="380" y2="200" stroke="#4ade80" stroke-width="1.5"/>
+
+  <!-- R1a -->
+  <line x1="380" y1="90" x2="420" y2="90" stroke="#f97316" stroke-width="2"/>
+  <rect x="420" y="80" width="50" height="20" fill="none" stroke="#e2e8f0" stroke-width="1.5" rx="2"/>
+  <text x="445" y="94" fill="#e2e8f0" text-anchor="middle" font-size="9">R1=10k</text>
+  <line x1="470" y1="90" x2="500" y2="90" stroke="#fbbf24" stroke-width="2"/>
+
+  <!-- C1a -->
+  <line x1="500" y1="90" x2="500" y2="110" stroke="#fbbf24" stroke-width="2"/>
+  <line x1="488" y1="110" x2="512" y2="110" stroke="#fbbf24" stroke-width="3"/>
+  <line x1="488" y1="116" x2="512" y2="116" stroke="#fbbf24" stroke-width="3"/>
+  <line x1="500" y1="116" x2="500" y2="130" stroke="#4ade80" stroke-width="1.5"/>
+  <line x1="500" y1="130" x2="500" y2="200" stroke="#4ade80" stroke-width="1.5"/>
+  <text x="516" y="110" fill="#e2e8f0" font-size="8">C1=200n</text>
+
+  <!-- R2a -->
+  <line x1="500" y1="90" x2="535" y2="90" stroke="#fbbf24" stroke-width="2"/>
+  <rect x="535" y="80" width="50" height="20" fill="none" stroke="#e2e8f0" stroke-width="1.5" rx="2"/>
+  <text x="560" y="94" fill="#e2e8f0" text-anchor="middle" font-size="9">R2=10k</text>
+  <line x1="585" y1="90" x2="615" y2="90" stroke="#fbbf24" stroke-width="2"/>
+
+  <!-- Op-amp symbol -->
+  <polygon points="615,68 615,112 655,90" fill="#1e3a1e" stroke="#34d399" stroke-width="2"/>
+  <text x="620" y="85" fill="#34d399" font-size="7">U1</text>
+  <text x="620" y="97" fill="#94a3b8" font-size="6">LT1006</text>
+  <line x1="655" y1="90" x2="690" y2="90" stroke="#34d399" stroke-width="2.5"/>
+  <circle cx="690" cy="90" r="4" fill="#34d399"/>
+  <text x="695" y="87" fill="#34d399" font-size="8">Vout</text>
+
+  <!-- C2a feedback -->
+  <line x1="615" y1="110" x2="615" y2="130" stroke="#fbbf24" stroke-width="2"/>
+  <line x1="615" y1="130" x2="570" y2="130" stroke="#fbbf24" stroke-width="2"/>
+  <line x1="558" y1="122" x2="572" y2="122" stroke="#fbbf24" stroke-width="3"/>
+  <line x1="558" y1="127" x2="572" y2="127" stroke="#fbbf24" stroke-width="3"/>
+  <line x1="558" y1="130" x2="500" y2="130" stroke="#fbbf24" stroke-width="2"/>
+  <text x="560" y="118" fill="#e2e8f0" font-size="7">C2=100n</text>
+
+  <!-- Unity gain feedback (short circuit) -->
+  <line x1="690" y1="90" x2="690" y2="108" stroke="#34d399" stroke-width="2"/>
+  <line x1="690" y1="108" x2="615" y2="108" stroke="#34d399" stroke-width="2"/>
+
+  <!-- GND bus -->
+  <line x1="380" y1="200" x2="700" y2="200" stroke="#4ade80" stroke-width="1.5"/>
+
+  <!-- 2nd order annotation -->
+  <rect x="360" y="215" width="330" height="70" fill="#0f172a" stroke="#34d399" stroke-width="1" rx="3"/>
+  <text x="525" y="232" fill="#34d399" text-anchor="middle" font-size="9" font-weight="bold">Butterworth 2nd Order — Q = 0.707</text>
+  <text x="370" y="248" fill="#94a3b8" font-size="8">@ 10Hz  (signal):  |H| ≈ 1.000  →  ~0 dB       ✓ passes</text>
+  <text x="370" y="261" fill="#4ade80" font-size="8">@ 1kHz (noise):   |H| = 0.025  →  -32 dB  ✓✓ much better</text>
+  <text x="370" y="274" fill="#94a3b8" font-size="8">Rolloff slope: -40 dB/decade above fc (2× steeper)</text>
+
+  <!-- ===== BODE PLOT ===== -->
+  <text x="20" y="310" fill="#94a3b8" font-size="11" font-weight="bold">Bode Plot Comparison</text>
+
+  <!-- Axes -->
+  <line x1="60" y1="460" x2="870" y2="460" stroke="#374151" stroke-width="1.5"/>
+  <line x1="60" y1="320" x2="60" y2="460" stroke="#374151" stroke-width="1.5"/>
+
+  <!-- Axis labels -->
+  <text x="460" y="476" fill="#64748b" text-anchor="middle" font-size="9">Frequency (Hz) — log scale</text>
+  <text x="20" y="400" fill="#64748b" text-anchor="middle" font-size="9" transform="rotate(-90,20,400)">Attenuation (dB)</text>
+
+  <!-- Frequency tick marks -->
+  <text x="100" y="472" fill="#64748b" font-size="7" text-anchor="middle">10</text>
+  <line x1="100" y1="460" x2="100" y2="463" stroke="#374151" stroke-width="1"/>
+  <text x="240" y="472" fill="#64748b" font-size="7" text-anchor="middle">100</text>
+  <line x1="240" y1="460" x2="240" y2="463" stroke="#374151" stroke-width="1"/>
+  <text x="330" y="472" fill="#60a5fa" font-size="7" text-anchor="middle">159Hz</text>
+  <line x1="330" y1="320" x2="330" y2="460" stroke="#60a5fa" stroke-width="0.5" stroke-dasharray="3,3"/>
+  <text x="500" y="472" fill="#64748b" font-size="7" text-anchor="middle">1k</text>
+  <line x1="500" y1="460" x2="500" y2="463" stroke="#374151" stroke-width="1"/>
+  <text x="680" y="472" fill="#64748b" font-size="7" text-anchor="middle">10k</text>
+  <line x1="680" y1="460" x2="680" y2="463" stroke="#374151" stroke-width="1"/>
+  <text x="860" y="472" fill="#64748b" font-size="7" text-anchor="middle">100k</text>
+
+  <!-- dB tick marks -->
+  <text x="55" y="325" fill="#64748b" font-size="7" text-anchor="end">0dB</text>
+  <line x1="57" y1="325" x2="870" y2="325" stroke="#374151" stroke-width="0.5" stroke-dasharray="2,4"/>
+  <text x="55" y="365" fill="#64748b" font-size="7" text-anchor="end">-20</text>
+  <line x1="57" y1="365" x2="870" y2="365" stroke="#374151" stroke-width="0.5" stroke-dasharray="2,4"/>
+  <text x="55" y="405" fill="#64748b" font-size="7" text-anchor="end">-40</text>
+  <line x1="57" y1="405" x2="870" y2="405" stroke="#374151" stroke-width="0.5" stroke-dasharray="2,4"/>
+  <text x="55" y="445" fill="#64748b" font-size="7" text-anchor="end">-60</text>
+  <line x1="57" y1="445" x2="870" y2="445" stroke="#374151" stroke-width="0.5" stroke-dasharray="2,4"/>
+
+  <!-- 1st order RC curve (blue) -->
+  <!-- Flat from 10-159Hz, then -20dB/decade rolloff -->
+  <polyline
+    points="60,325 240,325 330,328 500,365 680,405 860,445"
+    fill="none" stroke="#60a5fa" stroke-width="2.5" stroke-linejoin="round"/>
+
+  <!-- 2nd order Sallen-Key curve (green) — steeper rolloff -->
+  <!-- Flat from 10-112Hz, then -40dB/decade rolloff -->
+  <polyline
+    points="60,325 220,325 310,328 500,388 680,445 750,460"
+    fill="none" stroke="#34d399" stroke-width="2.5" stroke-linejoin="round"/>
+
+  <!-- -3dB markers -->
+  <circle cx="330" cy="328" r="4" fill="#60a5fa"/>
+  <text x="335" y="340" fill="#60a5fa" font-size="7">-3dB @ 159Hz</text>
+  <circle cx="310" cy="328" r="4" fill="#34d399"/>
+  <text x="316" y="320" fill="#34d399" font-size="7">-3dB @ 112Hz</text>
+
+  <!-- Noise point markers -->
+  <circle cx="500" cy="365" r="4" fill="#60a5fa"/>
+  <text x="505" y="362" fill="#60a5fa" font-size="7">-16dB</text>
+  <circle cx="500" cy="388" r="4" fill="#34d399"/>
+  <text x="505" y="385" fill="#34d399" font-size="7">-32dB</text>
+  <text x="505" y="373" fill="#f87171" font-size="7">1kHz noise</text>
+
+  <!-- Legend -->
+  <line x1="720" y1="330" x2="750" y2="330" stroke="#60a5fa" stroke-width="2.5"/>
+  <text x="755" y="333" fill="#60a5fa" font-size="9">1st order RC (-20dB/dec)</text>
+  <line x1="720" y1="345" x2="750" y2="345" stroke="#34d399" stroke-width="2.5"/>
+  <text x="755" y="348" fill="#34d399" font-size="9">2nd order Sallen-Key (-40dB/dec)</text>
+
+</svg>

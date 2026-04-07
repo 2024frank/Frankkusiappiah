@@ -72,6 +72,20 @@ export default function SkillsSection() {
       category: 'iot'
     },
     {
+      icon: Wrench,
+      title: 'PCB & Simulation',
+      skills: [
+        { name: 'KiCad 7', level: 85 },
+        { name: 'LTspice XVII', level: 82 },
+        { name: 'Ngspice 40', level: 80 },
+        { name: 'Analog Circuit Design', level: 83 },
+        { name: 'Schematic Capture', level: 86 },
+        { name: 'PCB Layout (4-layer)', level: 80 }
+      ],
+      color: 'cyan',
+      category: 'pcb'
+    },
+    {
       icon: Smartphone,
       title: 'Mobile & AR',
       skills: [
