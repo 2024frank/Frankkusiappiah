@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import {
   ArrowRight,
   ArrowUpRight,
@@ -124,25 +124,46 @@ function ProjectDialog({
   onClose: () => void
   onCopy: (project: Project) => void
 }) {
+  const dialogRef = useRef<HTMLElement>(null)
+  const closeButtonRef = useRef<HTMLButtonElement>(null)
+
   useEffect(() => {
     const previousOverflow = document.body.style.overflow
+    const previousFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null
     document.body.style.overflow = 'hidden'
+    closeButtonRef.current?.focus()
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') onClose()
+      if (event.key === 'Escape') {
+        onClose()
+        return
+      }
+      if (event.key !== 'Tab') return
+      const focusables = dialogRef.current?.querySelectorAll<HTMLElement>('a[href], button:not([disabled])')
+      if (!focusables?.length) return
+      const first = focusables[0]
+      const last = focusables[focusables.length - 1]
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault()
+        last.focus()
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault()
+        first.focus()
+      }
     }
     window.addEventListener('keydown', onKeyDown)
     return () => {
       document.body.style.overflow = previousOverflow
       window.removeEventListener('keydown', onKeyDown)
+      previousFocus?.focus()
     }
   }, [onClose])
 
   return (
     <div className="dialog-backdrop" role="presentation" onMouseDown={(event) => event.target === event.currentTarget && onClose()}>
-      <section className="case-dialog" role="dialog" aria-modal="true" aria-labelledby="case-title">
+      <section className="case-dialog" role="dialog" aria-modal="true" aria-labelledby="case-title" ref={dialogRef}>
         <div className="case-dialog__topbar">
           <span>Project case study</span>
-          <button type="button" className="dialog-close" onClick={onClose} aria-label="Close case study">
+          <button type="button" className="dialog-close" onClick={onClose} aria-label="Close case study" ref={closeButtonRef}>
             <X aria-hidden="true" />
           </button>
         </div>
@@ -202,7 +223,7 @@ function ProjectDialog({
           <div className="case-contribution">
             <div>
               <p className="eyebrow">My contribution</p>
-              <h3>Program ownership with technical depth</h3>
+              <h3>What I built and owned</h3>
             </div>
             <ul>
               {project.contribution.map((item) => (
@@ -236,6 +257,12 @@ export default function Portfolio() {
     window.addEventListener('popstate', syncProjectFromUrl)
     return () => window.removeEventListener('popstate', syncProjectFromUrl)
   }, [projectMap])
+
+  useEffect(() => {
+    const { hash } = window.location
+    if (!hash) return
+    document.getElementById(hash.slice(1))?.scrollIntoView({ behavior: 'instant' })
+  }, [])
 
   const openProject = (project: Project) => {
     const url = new URL(window.location.href)
@@ -300,7 +327,7 @@ export default function Portfolio() {
       <main>
         <section className="hero section-wrap">
           <div className="hero__copy">
-            <p className="eyebrow hero__eyebrow"><span /> Technical program management · Systems engineering</p>
+            <p className="eyebrow hero__eyebrow"><span /> Systems builder · Engineering student</p>
             <h1>I turn messy technical constraints into products people can use.</h1>
             <p className="hero__lede">
               I am Frank Kusi Appiah, an engineering student and systems builder working across wearable computing, civic AI, and campus-scale IoT infrastructure.
@@ -322,7 +349,7 @@ export default function Portfolio() {
               <img src="/images/profile.jpg" alt="Frank Kusi Appiah" />
               <div className="portrait-caption">
                 <span><MapPin aria-hidden="true" /> Oberlin, Ohio</span>
-                <strong>Open to Technical Program Management internships</strong>
+                <strong>I love building. Open to internships.</strong>
               </div>
             </div>
             <div className="portrait-note portrait-note--top">
@@ -363,7 +390,7 @@ export default function Portfolio() {
             <div className="experience-intro">
               <p className="eyebrow">Experience</p>
               <h2>Building across hardware, software, and operations.</h2>
-              <p>My strongest work happens where technical implementation and program decisions have to move together.</p>
+              <p>My strongest work happens where technical implementation and product decisions have to move together.</p>
               <a href="/documents/Frank-Kusi-Appiah-Resume.pdf" target="_blank" rel="noreferrer">
                 Download full resume <ArrowUpRight aria-hidden="true" />
               </a>
@@ -388,7 +415,7 @@ export default function Portfolio() {
           <div className="section-heading section-heading--about">
             <div>
               <p className="eyebrow">How I work</p>
-              <h2>Technical enough to see the risk. Structured enough to move the program.</h2>
+              <h2>Technical enough to see the risk. Hands-on enough to fix it.</h2>
             </div>
             <p>I use implementation as a way to sharpen product judgment, uncover hidden dependencies, and make release decisions with evidence.</p>
           </div>
@@ -419,10 +446,10 @@ export default function Portfolio() {
           <div className="section-wrap contact-grid">
             <div>
               <p className="eyebrow">Let us build something useful</p>
-              <h2>Looking for a technical program manager who can work inside the system?</h2>
+              <h2>I love building. If your team ships real systems, I want to help.</h2>
             </div>
             <div className="contact-copy">
-              <p>I am interested in Technical Program Management internships, systems programs, and teams working across software, hardware, data, and operations.</p>
+              <p>I am interested in internships and teams building across software, hardware, data, and operations.</p>
               <a className="button button--light" href="mailto:fkusiappiah@oberlin.edu"><Mail aria-hidden="true" /> fkusiappiah@oberlin.edu</a>
               <div className="social-links">
                 <a href="https://github.com/2024frank" target="_blank" rel="noreferrer"><Github aria-hidden="true" /> GitHub</a>
@@ -435,7 +462,7 @@ export default function Portfolio() {
 
       <footer className="site-footer section-wrap">
         <span>Frank Kusi Appiah · {new Date().getFullYear()}</span>
-        <span>Technical programs · Systems · Product delivery</span>
+        <span>Systems · Products · Delivery</span>
       </footer>
 
       {selectedProject && (

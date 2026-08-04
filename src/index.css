@@ -71,6 +71,11 @@ img {
   background: var(--forest);
 }
 
+:focus-visible {
+  outline: 2px solid var(--forest);
+  outline-offset: 3px;
+}
+
 .portfolio-shell {
   overflow: hidden;
 }
@@ -458,8 +463,8 @@ img {
 }
 
 .portrait-note--bottom {
-  bottom: 0;
-  left: 0;
+  bottom: 148px;
+  left: -18px;
 }
 
 .work,

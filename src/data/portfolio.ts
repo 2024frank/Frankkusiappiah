@@ -45,7 +45,7 @@ export const projects: Project[] = [
       { value: '2', label: 'operator and school consoles' },
       { value: 'MIT', label: 'open-source license' },
     ],
-    image: '/images/fieldline/fieldline-platform.png',
+    image: '/images/fieldline/fieldline-platform.jpg',
     imageAlt: 'Fieldline campus sensor network platform illustration',
     githubUrl: 'https://github.com/2024frank/fieldline',
     externalLabel: 'Open-source repository',
@@ -198,7 +198,7 @@ export const experiences = [
 
 export const capabilities = [
   {
-    title: 'Program ownership',
+    title: 'Ownership',
     description: 'Translate ambiguous problems into requirements, milestones, risks, acceptance criteria, and release decisions.',
   },
   {
@@ -211,7 +211,7 @@ export const capabilities = [
   },
   {
     title: 'Technical delivery',
-    description: 'Build enough of the system directly to make better tradeoffs, unblock teams, and verify that the program works end to end.',
+    description: 'Build enough of the system directly to make better tradeoffs, unblock teams, and verify that the system works end to end.',
   },
 ]
 
