@@ -1,16 +1,14 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import {
   ArrowRight,
   ArrowUpRight,
-  Check,
-  Copy,
   Download,
-  ExternalLink,
   Github,
   Linkedin,
   Mail,
-  MapPin,
   Menu,
+  Minus,
+  Plus,
   X,
 } from 'lucide-react'
 import {
@@ -22,301 +20,155 @@ import {
   type Project,
 } from '../data/portfolio'
 
+const asset = (p: string) => `${import.meta.env.BASE_URL}${p.replace(/^\//, '')}`
+
 const navItems = [
   { label: 'Work', href: '#work' },
+  { label: 'Bench', href: '#bench' },
   { label: 'Experience', href: '#experience' },
   { label: 'About', href: '#about' },
   { label: 'Contact', href: '#contact' },
 ]
 
-function projectShareUrl(id: string) {
-  const url = new URL(window.location.href)
-  url.searchParams.set('project', id)
-  url.hash = ''
-  return url.toString()
-}
+const benchShots = [
+  { src: '/images/bench/workbench-band.jpg', caption: 'Circuit boards, wires and a laptop on the bench.', tall: false },
+  { src: '/images/bench/sensor-in-hand.jpg', caption: 'A current transformer, checked by hand before it goes on a panel.', tall: true },
+  { src: '/images/bench/controller-board-wired.jpg', caption: 'Controller and relay boards wired on a wooden panel.', tall: true },
+  { src: '/images/bench/build-soldering-robot.jpg', caption: 'Soldering under deadline. The robot does not care.', tall: true },
+]
 
-function ProjectVisual({ project, compact = false }: { project: Project; compact?: boolean }) {
-  if (project.image) {
-    return (
-      <div className={`project-visual project-visual--${project.accent} ${compact ? 'project-visual--compact' : ''}`}>
-        <img src={project.image} alt={project.imageAlt ?? ''} loading="lazy" />
-      </div>
-    )
-  }
+const proofStats = [
+  { value: '1,600+', label: 'people read documents through my Even G2 app' },
+  { value: '10,000+', label: 'sensor readings processed every day at Oberlin' },
+  { value: '30+', label: 'IoT nodes kept alive across one campus' },
+  { value: '23', label: 'public display signs fed by the community calendar' },
+]
 
-  return (
-    <div className={`project-visual project-visual--system project-visual--${project.accent} ${compact ? 'project-visual--compact' : ''}`} aria-hidden="true">
-      <div className="system-grid" />
-      <span className="system-kicker">{project.eyebrow.split('·')[0].trim()}</span>
-      <strong>{project.name}</strong>
-      <div className="system-readout">
-        {project.metrics.map((metric) => (
-          <span key={metric.label}>
-            <b>{metric.value}</b>
-            {metric.label}
-          </span>
-        ))}
-      </div>
-    </div>
-  )
-}
-
-function ProjectCard({
-  project,
-  index,
-  onOpen,
-  onCopy,
-  copied,
-}: {
-  project: Project
-  index: number
-  onOpen: (project: Project) => void
-  onCopy: (project: Project) => void
-  copied: boolean
-}) {
-  return (
-    <article className={`project-card ${project.featured ? 'project-card--featured' : ''}`}>
-      <ProjectVisual project={project} />
-      <div className="project-card__body">
-        <div className="project-card__meta">
-          <span>0{index + 1}</span>
-          <span>{project.eyebrow}</span>
-        </div>
-        <h3>{project.name}</h3>
-        <p className="project-card__headline">{project.headline}</p>
-        <p className="project-card__summary">{project.summary}</p>
-        <div className="metric-row">
-          {project.metrics.map((metric) => (
-            <div key={metric.label}>
-              <strong>{metric.value}</strong>
-              <span>{metric.label}</span>
-            </div>
-          ))}
-        </div>
-        <div className="project-card__actions">
-          <button type="button" className="text-button" onClick={() => onOpen(project)}>
-            Read case study <ArrowRight aria-hidden="true" />
-          </button>
-          <button
-            type="button"
-            className={`icon-button ${copied ? 'icon-button--copied' : ''}`}
-            onClick={() => onCopy(project)}
-            aria-label={`Copy link to ${project.name}`}
-          >
-            {copied ? <Check aria-hidden="true" /> : <Copy aria-hidden="true" />}
-            <span>{copied ? 'Copied' : 'Copy link'}</span>
-          </button>
-        </div>
-      </div>
-    </article>
-  )
-}
-
-function ProjectDialog({
-  project,
-  copied,
-  onClose,
-  onCopy,
-}: {
-  project: Project
-  copied: boolean
-  onClose: () => void
-  onCopy: (project: Project) => void
-}) {
-  const dialogRef = useRef<HTMLElement>(null)
-  const closeButtonRef = useRef<HTMLButtonElement>(null)
-
-  useEffect(() => {
-    const previousOverflow = document.body.style.overflow
-    const previousFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null
-    document.body.style.overflow = 'hidden'
-    closeButtonRef.current?.focus()
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        onClose()
-        return
-      }
-      if (event.key !== 'Tab') return
-      const focusables = dialogRef.current?.querySelectorAll<HTMLElement>('a[href], button:not([disabled])')
-      if (!focusables?.length) return
-      const first = focusables[0]
-      const last = focusables[focusables.length - 1]
-      if (event.shiftKey && document.activeElement === first) {
-        event.preventDefault()
-        last.focus()
-      } else if (!event.shiftKey && document.activeElement === last) {
-        event.preventDefault()
-        first.focus()
-      }
-    }
-    window.addEventListener('keydown', onKeyDown)
-    return () => {
-      document.body.style.overflow = previousOverflow
-      window.removeEventListener('keydown', onKeyDown)
-      previousFocus?.focus()
-    }
-  }, [onClose])
+function ProjectRow({ project, index }: { project: Project; index: number }) {
+  const [open, setOpen] = useState(false)
+  const panelId = `case-${project.id}`
 
   return (
-    <div className="dialog-backdrop" role="presentation" onMouseDown={(event) => event.target === event.currentTarget && onClose()}>
-      <section className="case-dialog" role="dialog" aria-modal="true" aria-labelledby="case-title" ref={dialogRef}>
-        <div className="case-dialog__topbar">
-          <span>Project case study</span>
-          <button type="button" className="dialog-close" onClick={onClose} aria-label="Close case study" ref={closeButtonRef}>
-            <X aria-hidden="true" />
-          </button>
-        </div>
+    <article className="project" id={project.id}>
+      <div className="project__head">
+        <span className="project__index">{String(index + 1).padStart(2, '0')}</span>
+        <span className="project__eyebrow">{project.eyebrow}</span>
+      </div>
 
-        <ProjectVisual project={project} compact />
+      <div className="project__grid">
+        <div className="project__main">
+          <h3 className="project__name">{project.name}</h3>
+          <p className="project__headline">{project.headline}</p>
+          <p className="project__summary">{project.summary}</p>
 
-        <div className="case-dialog__content">
-          <div className="case-dialog__intro">
-            <p className="eyebrow">{project.eyebrow}</p>
-            <h2 id="case-title">{project.name}</h2>
-            <p className="case-lede">{project.headline}</p>
-            <div className="case-actions">
-              <button type="button" className="button button--dark" onClick={() => onCopy(project)}>
-                {copied ? <Check aria-hidden="true" /> : <Copy aria-hidden="true" />}
-                {copied ? 'Project link copied' : 'Copy project link'}
-              </button>
-              {project.githubUrl && (
-                <a className="button button--outline" href={project.githubUrl} target="_blank" rel="noreferrer">
-                  <Github aria-hidden="true" /> GitHub
-                </a>
-              )}
-              {project.liveUrl && (
-                <a className="button button--outline" href={project.liveUrl} target="_blank" rel="noreferrer">
-                  <ExternalLink aria-hidden="true" /> {project.externalLabel ?? 'Open project'}
-                </a>
-              )}
-            </div>
-          </div>
-
-          <div className="case-metrics">
+          <dl className="project__metrics">
             {project.metrics.map((metric) => (
               <div key={metric.label}>
-                <strong>{metric.value}</strong>
-                <span>{metric.label}</span>
+                <dt>{metric.label}</dt>
+                <dd>{metric.value}</dd>
               </div>
             ))}
-          </div>
+          </dl>
 
-          <div className="case-story-grid">
-            <div>
-              <span>01 · Constraint</span>
-              <h3>What made the problem difficult</h3>
-              <p>{project.challenge}</p>
-            </div>
-            <div>
-              <span>02 · Decision</span>
-              <h3>How I changed the shape of the problem</h3>
-              <p>{project.approach}</p>
-            </div>
-            <div>
-              <span>03 · Result</span>
-              <h3>What the system now enables</h3>
-              <p>{project.outcome}</p>
-            </div>
+          <div className="project__actions">
+            <button
+              type="button"
+              className="btn btn--ghost"
+              aria-expanded={open}
+              aria-controls={panelId}
+              onClick={() => setOpen((v) => !v)}
+            >
+              {open ? <Minus aria-hidden="true" /> : <Plus aria-hidden="true" />}
+              {open ? 'Close case study' : 'Read case study'}
+            </button>
+            {project.githubUrl && (
+              <a className="btn btn--link" href={project.githubUrl} target="_blank" rel="noreferrer">
+                <Github aria-hidden="true" /> GitHub <ArrowUpRight aria-hidden="true" />
+              </a>
+            )}
+            {project.liveUrl && (
+              <a className="btn btn--link" href={project.liveUrl} target="_blank" rel="noreferrer">
+                {project.externalLabel ?? 'Live'} <ArrowUpRight aria-hidden="true" />
+              </a>
+            )}
           </div>
+        </div>
 
-          <div className="case-contribution">
-            <div>
-              <p className="eyebrow">My contribution</p>
-              <h3>What I built and owned</h3>
-            </div>
+        {project.image && (
+          <figure className="project__figure">
+            <img src={asset(project.image)} alt={project.imageAlt ?? ''} loading="lazy" />
+            <figcaption>{project.stack.join(' · ')}</figcaption>
+          </figure>
+        )}
+      </div>
+
+      {open && (
+        <div className="case" id={panelId}>
+          <div className="case__col">
+            <h4>The constraint</h4>
+            <p>{project.challenge}</p>
+          </div>
+          <div className="case__col">
+            <h4>The decision</h4>
+            <p>{project.approach}</p>
+          </div>
+          <div className="case__col">
+            <h4>The result</h4>
+            <p>{project.outcome}</p>
+          </div>
+          <div className="case__own">
+            <h4>What I built and owned</h4>
             <ul>
               {project.contribution.map((item) => (
                 <li key={item}>{item}</li>
               ))}
             </ul>
           </div>
-
-          <div className="stack-list" aria-label="Technologies used">
-            {project.stack.map((technology) => <span key={technology}>{technology}</span>)}
-          </div>
         </div>
-      </section>
-    </div>
+      )}
+    </article>
   )
 }
 
 export default function Portfolio() {
   const [menuOpen, setMenuOpen] = useState(false)
-  const [selectedProject, setSelectedProject] = useState<Project | null>(null)
-  const [copiedId, setCopiedId] = useState<string | null>(null)
-
-  const projectMap = useMemo(() => new Map(projects.map((project) => [project.id, project])), [])
 
   useEffect(() => {
-    const syncProjectFromUrl = () => {
-      const id = new URL(window.location.href).searchParams.get('project')
-      setSelectedProject(id ? projectMap.get(id) ?? null : null)
-    }
-    syncProjectFromUrl()
-    window.addEventListener('popstate', syncProjectFromUrl)
-    return () => window.removeEventListener('popstate', syncProjectFromUrl)
-  }, [projectMap])
-
-  useEffect(() => {
-    const { hash } = window.location
-    if (!hash) return
-    document.getElementById(hash.slice(1))?.scrollIntoView({ behavior: 'instant' })
+    const id = new URL(window.location.href).searchParams.get('project')
+    if (id) document.getElementById(id)?.scrollIntoView()
   }, [])
 
-  const openProject = (project: Project) => {
-    const url = new URL(window.location.href)
-    url.searchParams.set('project', project.id)
-    url.hash = ''
-    window.history.pushState({}, '', url)
-    setSelectedProject(project)
-  }
-
-  const closeProject = () => {
-    const url = new URL(window.location.href)
-    url.searchParams.delete('project')
-    window.history.pushState({}, '', url)
-    setSelectedProject(null)
-  }
-
-  const copyProjectLink = async (project: Project) => {
-    const link = projectShareUrl(project.id)
-    try {
-      await navigator.clipboard.writeText(link)
-    } catch {
-      const input = document.createElement('textarea')
-      input.value = link
-      input.style.position = 'fixed'
-      input.style.opacity = '0'
-      document.body.appendChild(input)
-      input.select()
-      document.execCommand('copy')
-      input.remove()
-    }
-    setCopiedId(project.id)
-    window.setTimeout(() => setCopiedId((current) => current === project.id ? null : current), 1800)
-  }
-
   return (
-    <div className="portfolio-shell" id="top">
-      <header className="site-header">
-        <a className="brand" href="#top" aria-label="Frank Kusi Appiah home">
-          <span>FKA</span>
-          <small>Systems builder</small>
+    <div className="shell" id="top">
+      <a className="skip" href="#work">Skip to work</a>
+
+      <header className="topbar">
+        <a className="brand" href="#top" aria-label="Frank Kusi Appiah, top of page">
+          <span className="brand__mark">FKA</span>
+          <span className="brand__name">Frank Kusi Appiah</span>
         </a>
-        <nav className="desktop-nav" aria-label="Primary navigation">
-          {navItems.map((item) => <a key={item.href} href={item.href}>{item.label}</a>)}
+        <nav className="nav" aria-label="Primary">
+          {navItems.map((item) => (
+            <a key={item.href} href={item.href}>{item.label}</a>
+          ))}
         </nav>
-        <div className="header-actions">
-          <a className="resume-link" href="/documents/Frank-Kusi-Appiah-Resume.pdf" target="_blank" rel="noreferrer">
+        <div className="topbar__end">
+          <span className="status"><span className="status__dot" aria-hidden="true" /> Open to internships</span>
+          <a className="btn btn--small" href={asset('/documents/Frank-Kusi-Appiah-Resume.pdf')} target="_blank" rel="noreferrer">
             Resume <Download aria-hidden="true" />
           </a>
-          <button type="button" className="menu-button" onClick={() => setMenuOpen((open) => !open)} aria-expanded={menuOpen} aria-label="Toggle navigation">
+          <button
+            type="button"
+            className="menu-btn"
+            aria-expanded={menuOpen}
+            aria-label="Toggle navigation"
+            onClick={() => setMenuOpen((v) => !v)}
+          >
             {menuOpen ? <X aria-hidden="true" /> : <Menu aria-hidden="true" />}
           </button>
         </div>
         {menuOpen && (
-          <nav className="mobile-nav" aria-label="Mobile navigation">
+          <nav className="mobile-nav" aria-label="Mobile">
             {navItems.map((item) => (
               <a key={item.href} href={item.href} onClick={() => setMenuOpen(false)}>{item.label}</a>
             ))}
@@ -325,154 +177,152 @@ export default function Portfolio() {
       </header>
 
       <main>
-        <section className="hero section-wrap">
+        <section className="hero">
           <div className="hero__copy">
-            <p className="eyebrow hero__eyebrow"><span /> Systems builder · Engineering student</p>
-            <h1>I turn messy technical constraints into products people can use.</h1>
-            <p className="hero__lede">
-              I am Frank Kusi Appiah, an engineering student and systems builder working across wearable computing, civic AI, and campus-scale IoT infrastructure.
+            <p className="hero__route">Kumasi, Ghana <ArrowRight aria-hidden="true" /> Oberlin, Ohio</p>
+            <h1 className="hero__name">
+              <span>Frank Kusi</span>
+              <span>Appiah</span>
+            </h1>
+            <p className="hero__tag">I build robots, sensors <em>and apps.</em></p>
+            <p className="hero__dek">
+              I build sensor systems and software for Oberlin&rsquo;s Environmental Dashboard and founded
+              the club that became Makers and Engineers @Oberlin. Engineering student in Oberlin&rsquo;s
+              3-2 program, headed to Columbia.
             </p>
             <div className="hero__actions">
-              <a className="button button--primary" href="#work">Explore selected work <ArrowRight aria-hidden="true" /></a>
-              <a className="button button--secondary" href="mailto:fkusiappiah@oberlin.edu">Start a conversation</a>
+              <a className="btn btn--primary" href="#work">See the work <ArrowRight aria-hidden="true" /></a>
+              <a className="btn btn--ghost" href="mailto:fkusiappiah@oberlin.edu"><Mail aria-hidden="true" /> fkusiappiah@oberlin.edu</a>
             </div>
-            <div className="hero__proof" aria-label="Selected impact">
-              <div><strong>1,600+</strong><span>product users</span></div>
-              <div><strong>10,000+</strong><span>sensor readings daily</span></div>
-              <div><strong>40%</strong><span>fewer system failures</span></div>
-              <div><strong>50+</strong><span>pull requests reviewed</span></div>
-            </div>
+            <dl className="hero__spec">
+              <div><dt>Now</dt><dd>Hardware &amp; Software Manager, Oberlin Environmental Dashboard</dd></div>
+              <div><dt>Ships</dt><dd>LoRaWAN platforms · Even G2 apps · Civic AI</dd></div>
+            </dl>
           </div>
 
-          <div className="hero__portrait" aria-label="Portrait of Frank Kusi Appiah">
-            <div className="portrait-frame">
-              <img src="/images/profile.jpg" alt="Frank Kusi Appiah" />
-              <div className="portrait-caption">
-                <span><MapPin aria-hidden="true" /> Oberlin, Ohio</span>
-                <strong>I love building. Open to internships.</strong>
-              </div>
-            </div>
-            <div className="portrait-note portrait-note--top">
-              <span>Current focus</span>
-              <strong>Reliable systems at the edge</strong>
-            </div>
-            <div className="portrait-note portrait-note--bottom">
-              <span>Working style</span>
-              <strong>Requirements to release</strong>
-            </div>
-          </div>
+          <figure className="hero__photo">
+            <img src={asset('/images/bench/hero-kusi.jpg')} alt="Frank Kusi Appiah outdoors" />
+            <figcaption>
+              <span>Frank Kusi Appiah</span>
+              <span>Oberlin, Ohio</span>
+            </figcaption>
+          </figure>
         </section>
 
-        <section className="work section-wrap" id="work">
-          <div className="section-heading">
-            <div>
-              <p className="eyebrow">Selected work</p>
-              <h2>Systems built around real constraints.</h2>
+        <section className="proof" aria-label="Selected results">
+          {proofStats.map((stat) => (
+            <div className="proof__item" key={stat.label}>
+              <strong>{stat.value}</strong>
+              <span>{stat.label}</span>
             </div>
-            <p>Each case study explains the constraint, the decision that changed the problem, and the measurable result.</p>
+          ))}
+        </section>
+
+        <section className="section" id="work">
+          <div className="section__head">
+            <h2>Work</h2>
+            <p>Six systems, built around real constraints. Open a case study for the constraint, the decision, and what changed.</p>
           </div>
-          <div className="project-grid">
+          <div className="projects">
             {projects.map((project, index) => (
-              <ProjectCard
-                key={project.id}
-                project={project}
-                index={index}
-                onOpen={openProject}
-                onCopy={copyProjectLink}
-                copied={copiedId === project.id}
-              />
+              <ProjectRow key={project.id} project={project} index={index} />
             ))}
           </div>
         </section>
 
-        <section className="experience-section" id="experience">
-          <div className="section-wrap experience-grid">
-            <div className="experience-intro">
-              <p className="eyebrow">Experience</p>
-              <h2>Building across hardware, software, and operations.</h2>
-              <p>My strongest work happens where technical implementation and product decisions have to move together.</p>
-              <a href="/documents/Frank-Kusi-Appiah-Resume.pdf" target="_blank" rel="noreferrer">
-                Download full resume <ArrowUpRight aria-hidden="true" />
-              </a>
-            </div>
-            <div className="experience-list">
-              {experiences.map((experience, index) => (
-                <article key={experience.role}>
-                  <span>0{index + 1}</span>
-                  <div>
-                    <p>{experience.period}</p>
-                    <h3>{experience.role}</h3>
-                    <h4>{experience.organization}</h4>
-                    <p>{experience.description}</p>
-                  </div>
-                </article>
-              ))}
-            </div>
+        <section className="section bench" id="bench">
+          <div className="section__head">
+            <h2>Bench</h2>
+            <p>Sensors fail in winter. Someone has to find out why. Most of my software starts here, with a board that will not behave.</p>
+          </div>
+          <div className="bench__grid">
+            {benchShots.map((shot) => (
+              <figure key={shot.src} className={`bench__shot ${shot.tall ? 'bench__shot--tall' : 'bench__shot--wide'}`}>
+                <img src={asset(shot.src)} alt={shot.caption} loading="lazy" />
+                <figcaption>{shot.caption}</figcaption>
+              </figure>
+            ))}
           </div>
         </section>
 
-        <section className="about section-wrap" id="about">
-          <div className="section-heading section-heading--about">
-            <div>
-              <p className="eyebrow">How I work</p>
-              <h2>Technical enough to see the risk. Hands-on enough to fix it.</h2>
-            </div>
-            <p>I use implementation as a way to sharpen product judgment, uncover hidden dependencies, and make release decisions with evidence.</p>
+        <section className="section" id="experience">
+          <div className="section__head">
+            <h2>Experience</h2>
+            <p>Hardware, software, and the operations work in between.</p>
           </div>
-          <div className="capability-grid">
-            {capabilities.map((capability, index) => (
-              <article key={capability.title}>
-                <span>0{index + 1}</span>
-                <h3>{capability.title}</h3>
-                <p>{capability.description}</p>
+          <div className="ledger">
+            {experiences.map((exp) => (
+              <article className="ledger__row" key={exp.role}>
+                <span className="ledger__period">{exp.period}</span>
+                <div className="ledger__main">
+                  <h3>{exp.role}</h3>
+                  <span className="ledger__org">{exp.organization}</span>
+                </div>
+                <p className="ledger__desc">{exp.description}</p>
               </article>
             ))}
           </div>
-          <div className="credentials-grid">
+          <p className="section__more">
+            <a className="btn btn--link" href={asset('/documents/Frank-Kusi-Appiah-Resume.pdf')} target="_blank" rel="noreferrer">
+              Download full resume <ArrowUpRight aria-hidden="true" />
+            </a>
+          </p>
+        </section>
+
+        <section className="section" id="about">
+          <div className="section__head">
+            <h2>How I work</h2>
+            <p>Technical enough to see the risk. Hands-on enough to fix it.</p>
+          </div>
+          <div className="capabilities">
+            {capabilities.map((cap, i) => (
+              <div className="capabilities__row" key={cap.title}>
+                <span className="capabilities__index">{String(i + 1).padStart(2, '0')}</span>
+                <h3>{cap.title}</h3>
+                <p>{cap.description}</p>
+              </div>
+            ))}
+          </div>
+          <div className="credentials">
             <div>
-              <p className="eyebrow">Education</p>
+              <h3>Education</h3>
               {education.map((item) => <p key={item}>{item}</p>)}
             </div>
             <div>
-              <p className="eyebrow">Recognition</p>
-              <div className="recognition-list">
-                {recognition.map((item) => <span key={item}>{item}</span>)}
-              </div>
+              <h3>Recognition</h3>
+              <ul className="credentials__list">
+                {recognition.map((item) => <li key={item}>{item}</li>)}
+              </ul>
             </div>
           </div>
         </section>
 
-        <section className="contact-section" id="contact">
-          <div className="section-wrap contact-grid">
-            <div>
-              <p className="eyebrow">Let us build something useful</p>
-              <h2>I love building. If your team ships real systems, I want to help.</h2>
-            </div>
-            <div className="contact-copy">
-              <p>I am interested in internships and teams building across software, hardware, data, and operations.</p>
-              <a className="button button--light" href="mailto:fkusiappiah@oberlin.edu"><Mail aria-hidden="true" /> fkusiappiah@oberlin.edu</a>
-              <div className="social-links">
-                <a href="https://github.com/2024frank" target="_blank" rel="noreferrer"><Github aria-hidden="true" /> GitHub</a>
-                <a href="https://www.linkedin.com/in/frank-kusi-appiah-260a95237/" target="_blank" rel="noreferrer"><Linkedin aria-hidden="true" /> LinkedIn</a>
-              </div>
-            </div>
+        <section className="contact" id="contact">
+          <h2>Say hi.</h2>
+          <p className="contact__copy">
+            I love building. If your team ships real systems across software, hardware, and data,
+            I want to help. Internships and collaborations welcome.
+          </p>
+          <a className="contact__mail" href="mailto:fkusiappiah@oberlin.edu">fkusiappiah@oberlin.edu</a>
+          <div className="contact__links">
+            <a className="btn btn--on-dark" href="https://github.com/2024frank" target="_blank" rel="noreferrer">
+              <Github aria-hidden="true" /> GitHub
+            </a>
+            <a className="btn btn--on-dark" href="https://www.linkedin.com/in/frank-kusi-appiah-260a95237/" target="_blank" rel="noreferrer">
+              <Linkedin aria-hidden="true" /> LinkedIn
+            </a>
+            <a className="btn btn--on-dark" href={asset('/documents/Frank-Kusi-Appiah-Resume.pdf')} target="_blank" rel="noreferrer">
+              <Download aria-hidden="true" /> Resume
+            </a>
           </div>
         </section>
       </main>
 
-      <footer className="site-footer section-wrap">
+      <footer className="footer">
         <span>Frank Kusi Appiah · {new Date().getFullYear()}</span>
-        <span>Systems · Products · Delivery</span>
+        <span>Kumasi to Oberlin. Robots, sensors, apps.</span>
       </footer>
-
-      {selectedProject && (
-        <ProjectDialog
-          project={selectedProject}
-          copied={copiedId === selectedProject.id}
-          onClose={closeProject}
-          onCopy={copyProjectLink}
-        />
-      )}
     </div>
   )
 }
+

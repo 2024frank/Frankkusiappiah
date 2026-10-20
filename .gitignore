@@ -23,8 +23,8 @@ dist-ssr
 *.sln
 *.sw?
 
-# Environment variables (keep .env for now as it contains API key)
-# .env
+# Environment variables — never commit secrets
+.env
 .env.local
 .env.development.local
 .env.test.local
