@@ -1,18 +1,21 @@
-# Design — Bench notebook
+# Design — Ghana-gold field case
 
-The site is a workbench at night: near-black green-tinted ground
-(#0c100d), paper-white ink, muted signal green (#4cc375) for live systems,
-solder amber (#e0a23e) for annotations, dates, and indexes. The contact
-section drench-shifts to deep forest green (#123524).
+The site is a field-equipment case from Frank's own world: a drenched
+Ghana-gold hero (#ebb83a) with black expanded type, bone (#f6f1e6) work
+chapters, a black readout band for the numbers, a night band for bench
+photos, and a deep forest-green (#183f28) contact close. Clay (#b3402a)
+appears only as annotation: indexes, dates, the scroll-progress rule.
+The brand mark is a black star on gold.
 
-Type: Archivo (800 uppercase display, tight tracking; 400–600 text).
-JetBrains Mono only where the content is data: metrics, dates, indexes,
-spec labels. Layout is ruled and tabular: hairline dividers, ledger rows,
-metric tables, full-bleed photo plates with plain captions. No cards,
-no gradients, no glass. Corners are square everywhere except the status dot.
+Type: Archivo variable — expanded 850 caps for display, regular widths
+for text. Source Serif 4 italic carries the tagline and project headlines,
+the human voice inside the engineering. JetBrains Mono only where the
+content is data: clocks, metrics, dates, indexes.
 
-Motion: one pulse on the availability dot; nothing else animates by default.
-Reduced-motion removes all transitions.
+UX systems: scroll-progress rule, active-section nav, project filters,
+animated case-study expansion, photo lightbox, copy-email with feedback,
+live Kumasi/Oberlin clocks, scroll reveals that respect reduced motion.
+Everything visible without JavaScript except the interactive extras.
 
-Mode: Experience/Persuade — the work and the bench photos lead; the ask is
-the email link, repeated in hero and contact.
+Mode: Experience/Persuade — the work and bench photos lead; the ask is
+the email, repeated in hero and contact.

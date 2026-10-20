@@ -1,7 +1,10 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import {
   ArrowRight,
+  ArrowUp,
   ArrowUpRight,
+  Check,
+  Copy,
   Download,
   Github,
   Linkedin,
@@ -37,6 +40,83 @@ const benchShots = [
   { src: '/images/bench/build-soldering-robot.jpg', caption: 'Soldering under deadline. The robot does not care.', tall: true },
 ]
 
+type BenchShot = (typeof benchShots)[number]
+
+const projectTags: Record<string, string[]> = {
+  fieldline: ['open-source', 'infrastructure'],
+  'pdf-reader-even-g2': ['shipped'],
+  'ai-community-calendar': ['shipped'],
+  'environmental-dashboard': ['infrastructure'],
+  'chirpstack-deploy': ['open-source', 'infrastructure'],
+  'ar-memory-journal': ['shipped'],
+}
+
+const workFilters = [
+  { id: 'all', label: 'All work' },
+  { id: 'shipped', label: 'Shipped products' },
+  { id: 'open-source', label: 'Open source' },
+  { id: 'infrastructure', label: 'Infrastructure' },
+] as const
+
+function useClocks() {
+  const [now, setNow] = useState(() => new Date())
+  useEffect(() => {
+    const t = window.setInterval(() => setNow(new Date()), 30_000)
+    return () => window.clearInterval(t)
+  }, [])
+  const fmt = (tz: string) =>
+    new Intl.DateTimeFormat('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: tz }).format(now)
+  return { kumasi: fmt('Africa/Accra'), oberlin: fmt('America/New_York') }
+}
+
+function usePageChrome() {
+  const [progress, setProgress] = useState(0)
+  const [active, setActive] = useState('')
+
+  useEffect(() => {
+    const onScroll = () => {
+      const max = document.documentElement.scrollHeight - window.innerHeight
+      setProgress(max > 0 ? Math.min(1, window.scrollY / max) : 0)
+    }
+    onScroll()
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => window.removeEventListener('scroll', onScroll)
+  }, [])
+
+  useEffect(() => {
+    const sections = navItems
+      .map((item) => document.getElementById(item.href.slice(1)))
+      .filter((el): el is HTMLElement => el !== null)
+    const io = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) if (entry.isIntersecting) setActive(entry.target.id)
+      },
+      { rootMargin: '-38% 0px -52% 0px' },
+    )
+    sections.forEach((el) => io.observe(el))
+    return () => io.disconnect()
+  }, [])
+
+  useEffect(() => {
+    document.documentElement.classList.add('js-rv')
+    const els = document.querySelectorAll<HTMLElement>('[data-rv], .section__head, .proof__item, .ledger__row, .capabilities__row')
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      els.forEach((el) => el.classList.add('in'))
+      return
+    }
+    const io = new IntersectionObserver(
+      (entries) => entries.forEach((e) => {
+        if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target) }
+      }),
+      { threshold: 0.12 },
+    )
+    els.forEach((el) => io.observe(el))
+    return () => io.disconnect()
+  }, [])
+
+  return { progress, active }
+}
+
 const proofStats = [
   { value: '1,600+', label: 'people read documents through my Even G2 app' },
   { value: '10,000+', label: 'sensor readings processed every day at Oberlin' },
@@ -49,7 +129,7 @@ function ProjectRow({ project, index }: { project: Project; index: number }) {
   const panelId = `case-${project.id}`
 
   return (
-    <article className="project" id={project.id}>
+    <article className={`project ${index % 2 === 1 ? 'project--flip' : ''}`} id={project.id}>
       <div className="project__head">
         <span className="project__index">{String(index + 1).padStart(2, '0')}</span>
         <span className="project__eyebrow">{project.eyebrow}</span>
@@ -102,8 +182,8 @@ function ProjectRow({ project, index }: { project: Project; index: number }) {
         )}
       </div>
 
-      {open && (
-        <div className="case" id={panelId}>
+      <div className={`case-wrap ${open ? 'case-wrap--open' : ''}`}>
+        <div className="case" id={panelId} aria-hidden={!open}>
           <div className="case__col">
             <h4>The constraint</h4>
             <p>{project.challenge}</p>
@@ -125,13 +205,58 @@ function ProjectRow({ project, index }: { project: Project; index: number }) {
             </ul>
           </div>
         </div>
-      )}
+      </div>
     </article>
+  )
+}
+
+function Lightbox({ shot, onClose }: { shot: BenchShot; onClose: () => void }) {
+  const closeRef = useRef<HTMLButtonElement>(null)
+
+  useEffect(() => {
+    const prev = document.body.style.overflow
+    const prevFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null
+    document.body.style.overflow = 'hidden'
+    closeRef.current?.focus()
+    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onClose()
+    window.addEventListener('keydown', onKey)
+    return () => {
+      document.body.style.overflow = prev
+      window.removeEventListener('keydown', onKey)
+      prevFocus?.focus()
+    }
+  }, [onClose])
+
+  return (
+    <div className="lightbox" role="dialog" aria-modal="true" aria-label={shot.caption} onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
+      <figure className="lightbox__frame">
+        <img src={asset(shot.src)} alt={shot.caption} />
+        <figcaption>{shot.caption}</figcaption>
+      </figure>
+      <button type="button" className="lightbox__close" onClick={onClose} aria-label="Close photo" ref={closeRef}>
+        <X aria-hidden="true" />
+      </button>
+    </div>
   )
 }
 
 export default function Portfolio() {
   const [menuOpen, setMenuOpen] = useState(false)
+  const [filter, setFilter] = useState<(typeof workFilters)[number]['id']>('all')
+  const [lightbox, setLightbox] = useState<BenchShot | null>(null)
+  const [copied, setCopied] = useState(false)
+  const clocks = useClocks()
+  const { progress, active } = usePageChrome()
+
+  const visibleProjects = projects.filter(
+    (p) => filter === 'all' || (projectTags[p.id] ?? []).includes(filter),
+  )
+
+  const copyEmail = async () => {
+    try { await navigator.clipboard.writeText('fkusiappiah@oberlin.edu') } catch { /* clipboard unavailable */ }
+    setCopied(true)
+    window.setTimeout(() => setCopied(false), 2000)
+  }
 
   useEffect(() => {
     const id = new URL(window.location.href).searchParams.get('project')
@@ -142,14 +267,24 @@ export default function Portfolio() {
     <div className="shell" id="top">
       <a className="skip" href="#work">Skip to work</a>
 
+      <div className="progress" style={{ transform: `scaleX(${progress})` }} aria-hidden="true" />
       <header className="topbar">
         <a className="brand" href="#top" aria-label="Frank Kusi Appiah, top of page">
-          <span className="brand__mark">FKA</span>
+          <span className="brand__mark" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="17" height="17" fill="currentColor"><path d="M12 1.8l3.1 6.9 7.5.7-5.6 5 1.6 7.4L12 18l-6.6 3.8L7 14.4 1.4 9.4l7.5-.7z" /></svg>
+          </span>
           <span className="brand__name">Frank Kusi Appiah</span>
         </a>
         <nav className="nav" aria-label="Primary">
           {navItems.map((item) => (
-            <a key={item.href} href={item.href}>{item.label}</a>
+            <a
+              key={item.href}
+              href={item.href}
+              className={active === item.href.slice(1) ? 'on' : ''}
+              aria-current={active === item.href.slice(1) ? 'true' : undefined}
+            >
+              {item.label}
+            </a>
           ))}
         </nav>
         <div className="topbar__end">
@@ -178,12 +313,19 @@ export default function Portfolio() {
 
       <main>
         <section className="hero">
-          <div className="hero__copy">
+          <div className="hero__topline">
             <p className="hero__route">Kumasi, Ghana <ArrowRight aria-hidden="true" /> Oberlin, Ohio</p>
-            <h1 className="hero__name">
-              <span>Frank Kusi</span>
-              <span>Appiah</span>
-            </h1>
+            <p className="hero__clocks" aria-label={`Kumasi ${clocks.kumasi}, Oberlin ${clocks.oberlin}`}>
+              <span>Kumasi <b>{clocks.kumasi}</b></span>
+              <span>Oberlin <b>{clocks.oberlin}</b></span>
+            </p>
+          </div>
+          <h1 className="hero__name">
+            <span>Frank Kusi</span>
+            <span>Appiah</span>
+          </h1>
+          <div className="hero__lower">
+          <div className="hero__copy">
             <p className="hero__tag">I build robots, sensors <em>and apps.</em></p>
             <p className="hero__dek">
               I build sensor systems and software for Oberlin&rsquo;s Environmental Dashboard and founded
@@ -201,12 +343,13 @@ export default function Portfolio() {
           </div>
 
           <figure className="hero__photo">
-            <img src={asset('/images/bench/hero-kusi.jpg')} alt="Frank Kusi Appiah outdoors" />
+            <img src={asset('/images/bench/hero-kusi.jpg')} alt="Frank Kusi Appiah outdoors" fetchPriority="high" />
             <figcaption>
               <span>Frank Kusi Appiah</span>
               <span>Oberlin, Ohio</span>
             </figcaption>
           </figure>
+          </div>
         </section>
 
         <section className="proof" aria-label="Selected results">
@@ -219,13 +362,27 @@ export default function Portfolio() {
         </section>
 
         <section className="section" id="work">
-          <div className="section__head">
+          <div className="section__head" data-rv>
             <h2>Work</h2>
             <p>Six systems, built around real constraints. Open a case study for the constraint, the decision, and what changed.</p>
           </div>
+          <div className="filters" role="group" aria-label="Filter projects">
+            {workFilters.map((f) => (
+              <button
+                key={f.id}
+                type="button"
+                className={`filter ${filter === f.id ? 'filter--on' : ''}`}
+                aria-pressed={filter === f.id}
+                onClick={() => setFilter(f.id)}
+              >
+                {f.label}
+                <span>{f.id === 'all' ? projects.length : projects.filter((p) => (projectTags[p.id] ?? []).includes(f.id)).length}</span>
+              </button>
+            ))}
+          </div>
           <div className="projects">
-            {projects.map((project, index) => (
-              <ProjectRow key={project.id} project={project} index={index} />
+            {visibleProjects.map((project) => (
+              <ProjectRow key={project.id} project={project} index={projects.indexOf(project)} />
             ))}
           </div>
         </section>
@@ -238,7 +395,9 @@ export default function Portfolio() {
           <div className="bench__grid">
             {benchShots.map((shot) => (
               <figure key={shot.src} className={`bench__shot ${shot.tall ? 'bench__shot--tall' : 'bench__shot--wide'}`}>
-                <img src={asset(shot.src)} alt={shot.caption} loading="lazy" />
+                <button type="button" className="bench__open" onClick={() => setLightbox(shot)} aria-label={`Enlarge photo: ${shot.caption}`}>
+                  <img src={asset(shot.src)} alt={shot.caption} loading="lazy" />
+                </button>
                 <figcaption>{shot.caption}</figcaption>
               </figure>
             ))}
@@ -304,6 +463,12 @@ export default function Portfolio() {
             I want to help. Internships and collaborations welcome.
           </p>
           <a className="contact__mail" href="mailto:fkusiappiah@oberlin.edu">fkusiappiah@oberlin.edu</a>
+          <div>
+            <button type="button" className="btn btn--on-dark contact__copybtn" onClick={copyEmail} aria-live="polite">
+              {copied ? <Check aria-hidden="true" /> : <Copy aria-hidden="true" />}
+              {copied ? 'Email copied' : 'Copy email'}
+            </button>
+          </div>
           <div className="contact__links">
             <a className="btn btn--on-dark" href="https://github.com/2024frank" target="_blank" rel="noreferrer">
               <Github aria-hidden="true" /> GitHub
@@ -320,8 +485,11 @@ export default function Portfolio() {
 
       <footer className="footer">
         <span>Frank Kusi Appiah · {new Date().getFullYear()}</span>
-        <span>Kumasi to Oberlin. Robots, sensors, apps.</span>
+        <span>Kumasi {clocks.kumasi} · Oberlin {clocks.oberlin}</span>
+        <a href="#top" className="footer__top">Back to top <ArrowUp aria-hidden="true" /></a>
       </footer>
+
+      {lightbox && <Lightbox shot={lightbox} onClose={() => setLightbox(null)} />}
     </div>
   )
 }
